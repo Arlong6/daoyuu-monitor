@@ -1,0 +1,38 @@
+name: 島語訂位監控
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # 每 60 分鐘
+  workflow_dispatch:       # 手動觸發
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore state cache
+        uses: actions/cache/restore@v4
+        with:
+          path: monitor_state.json
+          key: monitor-state-${{ github.run_id }}
+          restore-keys: monitor-state-
+
+      - name: Run monitor (once)
+        env:
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        run: python daoyuu_monitor.py --once
+
+      - name: Save state cache
+        uses: actions/cache/save@v4
+        with:
+          path: monitor_state.json
+          key: monitor-state-${{ github.run_id }}

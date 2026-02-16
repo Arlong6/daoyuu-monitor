@@ -1,0 +1,37 @@
+{
+  "email": {
+    "enabled": true,
+    "from": "tony0912045596@gmail.com",
+    "to": "tony0912045596@gmail.com",
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587
+  },
+  "desktop_notify": true,
+
+  "eztable": {
+    "enabled": true,
+    "restaurant_id": 17565,
+    "restaurant_name": "島語",
+    "people": 4,
+    "target_times": [],
+    "check_interval_minutes": 30,
+    "url": "https://tw.eztable.com/restaurant/17565"
+  },
+
+  "inline": {
+    "enabled": false,
+    "restaurants": [
+      {
+        "name": "島語-桃園台茂店",
+        "url": "https://inline.app/booking/-NeqTSgDQOAYi30lg4a7:inline-live-3/-NeqTStJZDIBQHEMSDI8",
+        "pax": 4,
+        "target_slots": ["晚餐", "午餐"],
+        "only_weekend": false,
+        "enabled": true
+      }
+    ],
+    "check_interval_minutes": 360,
+    "chrome_version": 144,
+    "headless": true
+  }
+}
