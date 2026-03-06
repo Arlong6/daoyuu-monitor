@@ -381,15 +381,7 @@ if __name__ == "__main__":
     if args.once:
         # 單次模式：執行一次就結束（GitHub Actions 用）
         print("🔄 單次檢查模式")
-        result = monitor.check_eztable()
-        # 沒有新空位時寄一封狀態信，讓你知道還在跑
-        if not result:
-            now = datetime.now().strftime('%Y-%m-%d %H:%M')
-            monitor.send_email(
-                f"📋 島語監控正常運作中 ({now})",
-                f"⏰ {now}\n✅ 監控正常，目前沒有符合條件的空位。\n\n下次檢查：約 60 分鐘後"
-            )
-            print("📧 已寄出狀態通知信")
+        monitor.check_eztable()
         print("✅ 檢查完成")
     else:
         # 持續監控模式（本地用）
