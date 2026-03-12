@@ -10,12 +10,12 @@
 
   "eztable": {
     "enabled": true,
-    "restaurant_id": 17565,
-    "restaurant_name": "島語",
+    "restaurant_id": 17778,
+    "restaurant_name": "島語-桃園台茂店",
     "people": 4,
     "target_times": [],
     "check_interval_minutes": 30,
-    "url": "https://tw.eztable.com/restaurant/17565"
+    "url": "https://tw.eztable.com/restaurant/17778"
   },
 
   "inline": {

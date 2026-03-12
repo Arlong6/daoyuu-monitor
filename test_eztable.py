@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # 手動觸發通知（用前 3 天的結果）
     if results:
         print()
-        monitor.notify_eztable(results)
+        monitor._notify_eztable(results)
     result = bool(results)
 
     print()
