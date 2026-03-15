@@ -1,16 +1,16 @@
-name: 島語訂位監控
+name: 系統心跳檢查
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # 每 30 分鐘
-  workflow_dispatch:         # 手動觸發
+    - cron: '0 9 * * 1'  # 每週一早上 9 點（UTC+8 = 17:00 UTC 前一天，用 UTC 1:00 = 台灣 9:00）
+  workflow_dispatch:
 
 jobs:
-  check:
+  heartbeat:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write  # 允許 commit state 回 repo
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -22,15 +22,16 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run monitor (once)
+      - name: Send heartbeat
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python daoyuu_monitor.py --once
+        run: python daoyuu_monitor.py --heartbeat
 
-      - name: Save state to repo
+      - name: Commit timestamp to keep repo active
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add monitor_state.json
-          git diff --staged --quiet || git commit -m "chore: update monitor state [skip ci]"
+          echo "Last heartbeat: $(TZ='Asia/Taipei' date)" > last_heartbeat.txt
+          git add last_heartbeat.txt
+          git commit -m "chore: weekly heartbeat [skip ci]"
           git push

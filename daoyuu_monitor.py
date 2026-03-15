@@ -512,14 +512,39 @@ class DualPlatformMonitor:
         if self.eztable_enabled:
             self.check_eztable()
         if self.inline_enabled:
-            self._run_inline_check()
+            if os.environ.get('GITHUB_ACTIONS'):
+                print("⚠️ GitHub Actions 環境，跳過 inline（需要瀏覽器）")
+            else:
+                self._run_inline_check()
         print("✅ 檢查完成")
+
+    def send_heartbeat(self):
+        """發送每週心跳 Email，確認系統正常運行"""
+        state = self.state
+        eztable_dates = list(state.get('eztable_available', {}).keys())
+        last_seen = f"{len(eztable_dates)} 個日期有空位" if eztable_dates else "目前無空位"
+
+        body = f"""✅ 島語訂位監控系統運行正常
+
+監控餐廳: {self.eztable_restaurant_name}
+目前狀態: {last_seen}
+{f"最近空位: {', '.join(eztable_dates[:3])}" if eztable_dates else ""}
+
+系統將持續每 30 分鐘檢查一次，有空位時會立即通知。
+"""
+        print("💓 發送心跳 Email...")
+        if self.send_email("💓 島語監控系統運行中", body):
+            print("✓ 心跳 Email 已發送")
+        else:
+            print("❌ 心跳 Email 發送失敗")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='島語訂位監控系統')
     parser.add_argument('--once', action='store_true',
                         help='執行一次檢查後結束（GitHub Actions 用）')
+    parser.add_argument('--heartbeat', action='store_true',
+                        help='發送心跳 Email 確認系統正常')
     args = parser.parse_args()
 
     load_dotenv()
@@ -544,7 +569,9 @@ if __name__ == "__main__":
 
     monitor = DualPlatformMonitor(config)
 
-    if args.once:
+    if args.heartbeat:
+        monitor.send_heartbeat()
+    elif args.once:
         monitor.run_once()
     else:
         monitor.run()
