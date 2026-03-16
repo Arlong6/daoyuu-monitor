@@ -66,6 +66,12 @@ class DualPlatformMonitor:
         self.eztable_url = ez.get('url', '')
         self.eztable_interval = ez.get('check_interval_minutes', 30)
 
+        # Telegram 設定
+        tg = config.get('telegram', {})
+        self.telegram_enabled = tg.get('enabled', False)
+        self.telegram_chat_id = tg.get('chat_id', '')
+        self.telegram_token = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+
         # inline 設定
         il = config.get('inline', {})
         self.inline_enabled = il.get('enabled', False)
@@ -379,6 +385,23 @@ class DualPlatformMonitor:
             print(f"⚠️ Email 發送失敗: {e}")
             return False
 
+    def send_telegram(self, message):
+        """發送 Telegram 通知"""
+        if not self.telegram_enabled or not self.telegram_token:
+            return False
+        try:
+            url = f"https://api.telegram.org/bot{self.telegram_token}/sendMessage"
+            resp = requests.post(url, json={
+                'chat_id': self.telegram_chat_id,
+                'text': message,
+                'parse_mode': 'HTML',
+            }, timeout=10)
+            resp.raise_for_status()
+            return True
+        except Exception as e:
+            print(f"⚠️ Telegram 發送失敗: {e}")
+            return False
+
     def send_desktop_notification(self, title, message):
         """發送桌面通知"""
         if not self.desktop_notify:
@@ -444,6 +467,9 @@ class DualPlatformMonitor:
 
         if self.send_email(subject, body):
             print("✓ Email 已發送")
+
+        if self.send_telegram(body):
+            print("✓ Telegram 已發送")
 
         self.send_desktop_notification(desktop_title, desktop_body)
         print("✓ 桌面通知已發送")
@@ -537,6 +563,9 @@ class DualPlatformMonitor:
             print("✓ 心跳 Email 已發送")
         else:
             print("❌ 心跳 Email 發送失敗")
+
+        if self.send_telegram(body):
+            print("✓ 心跳 Telegram 已發送")
 
 
 if __name__ == "__main__":

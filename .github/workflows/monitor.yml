@@ -25,6 +25,7 @@ jobs:
       - name: Run monitor (once)
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: python daoyuu_monitor.py --once
 
       - name: Save state to repo

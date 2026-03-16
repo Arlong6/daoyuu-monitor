@@ -25,6 +25,7 @@ jobs:
       - name: Send heartbeat
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         run: python daoyuu_monitor.py --heartbeat
 
       - name: Commit timestamp to keep repo active

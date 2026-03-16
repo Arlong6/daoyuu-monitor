@@ -8,6 +8,11 @@
   },
   "desktop_notify": true,
 
+  "telegram": {
+    "enabled": true,
+    "chat_id": "7110379672"
+  },
+
   "eztable": {
     "enabled": true,
     "restaurant_id": 17778,
