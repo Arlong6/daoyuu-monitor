@@ -1,5 +1,5 @@
 """
-島語訂位監控系統 - EZTABLE + inline 雙平台
+訂位監控系統 - EZTABLE + inline 雙平台
 
 策略：
 - EZTABLE: 每 30 分鐘檢查一次（使用 REST API，快速且穩定）
@@ -59,11 +59,7 @@ class DualPlatformMonitor:
         # EZTABLE 設定
         ez = config.get('eztable', {})
         self.eztable_enabled = ez.get('enabled', False)
-        self.eztable_restaurant_id = ez.get('restaurant_id')
-        self.eztable_restaurant_name = ez.get('restaurant_name', 'EZTABLE')
-        self.eztable_people = ez.get('people', 2)
-        self.eztable_target_times = ez.get('target_times', [])
-        self.eztable_url = ez.get('url', '')
+        self.eztable_restaurants = [r for r in ez.get('restaurants', []) if r.get('enabled', True)]
         self.eztable_interval = ez.get('check_interval_minutes', 30)
 
         # Telegram 設定
@@ -127,12 +123,9 @@ class DualPlatformMonitor:
                 time.sleep(3)
         raise last_error
 
-    def _get_available_dates(self):
+    def _get_available_dates(self, restaurant_id, people):
         """取得有位的日期列表"""
-        params = {
-            'restaurant_id': self.eztable_restaurant_id,
-            'people': self.eztable_people,
-        }
+        params = {'restaurant_id': restaurant_id, 'people': people}
         data = self._eztable_api_get('/v3/hotpot/quota', params=params)
 
         available = []
@@ -147,35 +140,47 @@ class DualPlatformMonitor:
 
         return sorted(available)
 
-    def _get_times_for_date(self, date_str):
+    def _get_times_for_date(self, date_str, restaurant_id, people):
         """取得某日的可用時段"""
-        params = {
-            'restaurant_id': self.eztable_restaurant_id,
-            'people': self.eztable_people,
-        }
+        params = {'restaurant_id': restaurant_id, 'people': people}
         data = self._eztable_api_get(f'/v3/hotpot/quota/{date_str}', params=params)
         return data.get('times', [])
 
     def check_eztable(self):
-        """檢查 EZTABLE（使用 REST API）"""
+        """檢查所有啟用的 EZTABLE 餐廳"""
         if not self.eztable_enabled:
             return None
 
+        for restaurant in self.eztable_restaurants:
+            self._check_eztable_restaurant(restaurant)
+            time.sleep(2)  # 避免 API 請求過於頻繁
+
+    def _check_eztable_restaurant(self, r):
+        """檢查單一 EZTABLE 餐廳"""
+        name = r['restaurant_name']
+        rid = r['restaurant_id']
+        people = r.get('people', 2)
+        target_times = r.get('target_times', [])
+        url = r.get('url', '')
+
         print(f"\n{'='*70}")
-        print(f"🍽️  檢查 EZTABLE - {self.eztable_restaurant_name}")
+        print(f"🍽️  檢查 EZTABLE - {name}")
         print(f"   時間: {datetime.now().strftime('%H:%M:%S')}")
-        print(f"   人數: {self.eztable_people} 人")
-        if self.eztable_target_times:
-            print(f"   篩選時段: {', '.join(self.eztable_target_times)}")
+        print(f"   人數: {people} 人")
+        if target_times:
+            print(f"   篩選時段: {', '.join(target_times)}")
         print(f"{'='*70}")
 
+        # 每家餐廳的 state 用餐廳名稱當 key
+        all_state = self.state.setdefault('eztable_available', {})
+
         try:
-            available_dates = self._get_available_dates()
+            available_dates = self._get_available_dates(rid, people)
 
             if not available_dates:
                 print("   目前沒有可用日期")
-                if self.state.get('eztable_available', {}):
-                    self.state['eztable_available'] = {}
+                if all_state.get(name):
+                    all_state[name] = {}
                     self.save_state()
                 return False
 
@@ -184,9 +189,9 @@ class DualPlatformMonitor:
             results = {}
             for date_str in available_dates:
                 try:
-                    times = self._get_times_for_date(date_str)
-                    if self.eztable_target_times:
-                        times = [t for t in times if t in self.eztable_target_times]
+                    times = self._get_times_for_date(date_str, rid, people)
+                    if target_times:
+                        times = [t for t in times if t in target_times]
                     if times:
                         results[date_str] = sorted(times)
                         print(f"   📅 {date_str}: {', '.join(times)}")
@@ -194,15 +199,15 @@ class DualPlatformMonitor:
                     print(f"   ⚠️ 查詢 {date_str} 時段失敗: {e}")
 
             if not results:
-                target_note = f"（篩選: {', '.join(self.eztable_target_times)}）" if self.eztable_target_times else ""
+                target_note = f"（篩選: {', '.join(target_times)}）" if target_times else ""
                 print(f"   沒有符合的時段{target_note}")
-                if self.state.get('eztable_available', {}):
-                    self.state['eztable_available'] = {}
+                if all_state.get(name):
+                    all_state[name] = {}
                     self.save_state()
                 return False
 
             # 找出新增的日期或時段
-            old_available = self.state.get('eztable_available', {})
+            old_available = all_state.get(name, {})
             new_slots = {}
             for date_str, times in results.items():
                 old_times = set(old_available.get(date_str, []))
@@ -210,12 +215,12 @@ class DualPlatformMonitor:
                 if added:
                     new_slots[date_str] = added
 
-            self.state['eztable_available'] = results
+            all_state[name] = results
             self.save_state()
 
             if new_slots:
                 print(f"   🆕 發現新增時段！")
-                self._notify_eztable(new_slots)
+                self._notify_eztable(name, people, url, new_slots)
 
             return True
 
@@ -277,7 +282,6 @@ class DualPlatformMonitor:
             driver.get(url)
             time.sleep(random.uniform(5, 8))
 
-            # 檢查 PX 驗證
             has_captcha = driver.execute_script("""
                 try {
                     var c = document.getElementById('px-captcha');
@@ -288,7 +292,6 @@ class DualPlatformMonitor:
                 print("⚠️ 遇到 PX 驗證，本次跳過")
                 return None
 
-            # 選擇人數
             try:
                 select = WebDriverWait(driver, 5).until(
                     EC.presence_of_element_located((By.ID, 'adult-picker'))
@@ -301,7 +304,6 @@ class DualPlatformMonitor:
             except Exception:
                 pass
 
-            # 等待日曆載入
             print("📅 提取可用日期...")
             WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, '[data-cy="bt-cal-day"]'))
@@ -340,7 +342,6 @@ class DualPlatformMonitor:
     def _process_inline_results(self, results):
         """比對 inline 新舊狀態，對有新增的餐廳發送通知"""
         old_state = self.state.get('inline_available', {})
-        changed = False
 
         for name, info in results.items():
             url = info['url']
@@ -353,11 +354,9 @@ class DualPlatformMonitor:
                 self._notify_inline(name, url, new_dates)
 
             old_state[name] = dates
-            changed = True
 
-        if changed:
-            self.state['inline_available'] = old_state
-            self.save_state()
+        self.state['inline_available'] = old_state
+        self.save_state()
 
     # ==================== 通知系統 ====================
 
@@ -408,11 +407,11 @@ class DualPlatformMonitor:
             return
         try:
             from plyer import notification
-            notification.notify(title=title, message=message, app_name='島語監控', timeout=10)
+            notification.notify(title=title, message=message, app_name='訂位監控', timeout=10)
         except Exception as e:
             print(f"⚠️ 桌面通知失敗: {e}")
 
-    def _notify_eztable(self, new_slots):
+    def _notify_eztable(self, name, people, url, new_slots):
         """發送 EZTABLE 通知（含具體時段）"""
         lines = []
         for date_str, times in sorted(new_slots.items()):
@@ -423,18 +422,18 @@ class DualPlatformMonitor:
         message = f"""🎉 發現訂位！
 
 平台: EZTABLE
-餐廳: {self.eztable_restaurant_name}
-人數: {self.eztable_people} 人
+餐廳: {name}
+人數: {people} 人
 
 可用時段:
 {chr(10).join(lines)}
 
-快去訂位: {self.eztable_url}
+快去訂位: {url}
 """
         self._send_notification(
-            subject=f"🎉 {self.eztable_restaurant_name} 有位置了！(EZTABLE)",
+            subject=f"🎉 {name} 有位置了！(EZTABLE)",
             body=message,
-            desktop_title=f"🎉 {self.eztable_restaurant_name} 有位置了！",
+            desktop_title=f"🎉 {name} 有位置了！",
             desktop_body=f"EZTABLE - {len(new_slots)} 天有新時段",
         )
 
@@ -485,25 +484,25 @@ class DualPlatformMonitor:
     def run(self):
         """啟動監控（持續模式）"""
         print("="*70)
-        print("🍽️  島語訂位監控系統 - 雙平台")
+        print("🍽️  訂位監控系統 - 雙平台")
         print("="*70)
         print()
         print("📋 監控設定:")
         if self.eztable_enabled:
-            print(f"   • EZTABLE: 每 {self.eztable_interval} 分鐘")
-            print(f"     餐廳: {self.eztable_restaurant_name} (ID: {self.eztable_restaurant_id})")
-            print(f"     人數: {self.eztable_people} 人")
-            if self.eztable_target_times:
-                print(f"     篩選時段: {', '.join(self.eztable_target_times)}")
+            print(f"   • EZTABLE: 每 {self.eztable_interval} 分鐘，共 {len(self.eztable_restaurants)} 家")
+            for r in self.eztable_restaurants:
+                print(f"     - {r['restaurant_name']} ({r.get('people', 2)} 人)")
         if self.inline_enabled:
             print(f"   • inline: 每 {self.inline_interval} 分鐘")
             for r in self.inline_restaurants:
                 if r.get('enabled', True):
-                    print(f"     餐廳: {r['name']} ({r.get('pax', 2)} 人)")
+                    print(f"     - {r['name']} ({r.get('pax', 2)} 人)")
         print()
         print("🔔 通知管道:")
         if self.email_config.get('enabled'):
             print(f"   • Email: {self.email_config['to']}")
+        if self.telegram_enabled:
+            print(f"   • Telegram: chat_id {self.telegram_chat_id}")
         if self.desktop_notify:
             print(f"   • 桌面通知: 開啟")
         print()
@@ -511,7 +510,6 @@ class DualPlatformMonitor:
         print("="*70)
         print()
 
-        # 立即執行一次
         print("🚀 立即執行初始檢查...\n")
         if self.eztable_enabled:
             self.check_eztable()
@@ -519,7 +517,6 @@ class DualPlatformMonitor:
             time.sleep(3)
             self._run_inline_check()
 
-        # 設定排程
         if self.eztable_enabled:
             schedule.every(self.eztable_interval).minutes.do(self.check_eztable)
         if self.inline_enabled:
@@ -545,21 +542,24 @@ class DualPlatformMonitor:
         print("✅ 檢查完成")
 
     def send_heartbeat(self):
-        """發送每週心跳 Email，確認系統正常運行"""
-        state = self.state
-        eztable_dates = list(state.get('eztable_available', {}).keys())
-        last_seen = f"{len(eztable_dates)} 個日期有空位" if eztable_dates else "目前無空位"
+        """發送每週心跳，確認系統正常運行"""
+        all_state = self.state.get('eztable_available', {})
+        lines = []
+        for r in self.eztable_restaurants:
+            name = r['restaurant_name']
+            slots = all_state.get(name, {})
+            status = f"{len(slots)} 個日期有空位" if slots else "目前無空位"
+            lines.append(f"  • {name}: {status}")
 
-        body = f"""✅ 島語訂位監控系統運行正常
+        body = f"""✅ 訂位監控系統運行正常
 
-監控餐廳: {self.eztable_restaurant_name}
-目前狀態: {last_seen}
-{f"最近空位: {', '.join(eztable_dates[:3])}" if eztable_dates else ""}
+監控餐廳（共 {len(self.eztable_restaurants)} 家）:
+{chr(10).join(lines)}
 
-系統將持續每 30 分鐘檢查一次，有空位時會立即通知。
+系統每 {self.eztable_interval} 分鐘檢查一次，有空位時會立即通知。
 """
-        print("💓 發送心跳 Email...")
-        if self.send_email("💓 島語監控系統運行中", body):
+        print("💓 發送心跳通知...")
+        if self.send_email("💓 訂位監控系統運行中", body):
             print("✓ 心跳 Email 已發送")
         else:
             print("❌ 心跳 Email 發送失敗")
@@ -569,23 +569,19 @@ class DualPlatformMonitor:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='島語訂位監控系統')
+    parser = argparse.ArgumentParser(description='訂位監控系統')
     parser.add_argument('--once', action='store_true',
                         help='執行一次檢查後結束（GitHub Actions 用）')
     parser.add_argument('--heartbeat', action='store_true',
-                        help='發送心跳 Email 確認系統正常')
+                        help='發送心跳通知確認系統正常')
     args = parser.parse_args()
 
     load_dotenv()
     config = load_config()
 
-    if not args.once:
+    if not args.once and not args.heartbeat:
         if not config['email'].get('enabled') and not config.get('desktop_notify'):
             print("⚠️ 警告: 沒有啟用任何通知管道！")
-            print()
-            print("請至少設定一種通知方式（在 config.json 中）：")
-            print('  1. "email": { "enabled": true, ... }')
-            print('  2. "desktop_notify": true')
             print()
             choice = input("是否繼續（只會在終端機顯示）？(y/n): ")
             if choice.lower() != 'y':
@@ -593,7 +589,6 @@ if __name__ == "__main__":
 
     if not config.get('eztable', {}).get('enabled') and not config.get('inline', {}).get('enabled'):
         print("⚠️ 錯誤: 沒有啟用任何平台！")
-        print("請在 config.json 中啟用 eztable 或 inline")
         raise SystemExit(1)
 
     monitor = DualPlatformMonitor(config)
