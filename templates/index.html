@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訂位通知 - 熱門餐廳空位提醒</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b">
+    <div class="max-w-2xl mx-auto px-4 py-5">
+      <h1 class="text-2xl font-bold text-gray-900">🍽️ 訂位通知</h1>
+      <p class="text-gray-500 text-sm mt-1">熱門餐廳有空位時，第一時間通知你</p>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-2xl mx-auto px-4 py-8">
+
+    <!-- 說明 -->
+    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-sm text-blue-700">
+      選擇你想監控的餐廳，填入 Email，有空位時立刻寄信通知你。完全免費。
+    </div>
+
+    <!-- 表單 -->
+    <div class="bg-white rounded-xl shadow-sm border p-6">
+      <h2 class="text-lg font-semibold text-gray-800 mb-5">設定通知</h2>
+
+      <!-- 餐廳選擇 -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">餐廳</label>
+        <select id="restaurant-select"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">載入中...</option>
+        </select>
+      </div>
+
+      <!-- 人數 -->
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">用餐人數</label>
+        <select id="people-select"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="2">2 人</option>
+          <option value="3">3 人</option>
+          <option value="4" selected>4 人</option>
+          <option value="5">5 人</option>
+          <option value="6">6 人</option>
+          <option value="8">8 人</option>
+        </select>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input id="email-input" type="email" placeholder="your@email.com"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- 送出 -->
+      <button id="submit-btn" onclick="subscribe()"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition">
+        開始監控，有位就通知我
+      </button>
+
+      <!-- 結果訊息 -->
+      <div id="message" class="mt-4 text-sm text-center hidden"></div>
+    </div>
+
+    <!-- 目前監控的餐廳 -->
+    <div class="mt-8">
+      <h2 class="text-base font-semibold text-gray-700 mb-3">目前可監控的餐廳</h2>
+      <div id="restaurant-list" class="space-y-2"></div>
+    </div>
+
+  </main>
+
+  <footer class="text-center text-gray-400 text-xs py-8">
+    每 30 分鐘自動檢查一次 · 有空位立即通知
+  </footer>
+
+  <script>
+    let restaurants = []
+
+    async function loadRestaurants() {
+      const res = await fetch('/api/restaurants')
+      restaurants = await res.json()
+
+      const select = document.getElementById('restaurant-select')
+      select.innerHTML = restaurants.map(r =>
+        `<option value="${r.id}" data-name="${r.name}" data-url="${r.url}" data-people="${r.people}">
+          ${r.name}
+        </option>`
+      ).join('')
+
+      const list = document.getElementById('restaurant-list')
+      list.innerHTML = restaurants.map(r => `
+        <div class="flex items-center justify-between bg-white border rounded-lg px-4 py-3">
+          <span class="text-sm text-gray-700">${r.name}</span>
+          <a href="${r.url}" target="_blank"
+            class="text-xs text-blue-500 hover:underline">查看 →</a>
+        </div>
+      `).join('')
+    }
+
+    async function subscribe() {
+      const select = document.getElementById('restaurant-select')
+      const option = select.selectedOptions[0]
+      const email = document.getElementById('email-input').value.trim()
+      const people = parseInt(document.getElementById('people-select').value)
+      const msgEl = document.getElementById('message')
+
+      if (!email || !email.includes('@')) {
+        showMessage('請輸入正確的 Email', 'error')
+        return
+      }
+      if (!option || !option.value) {
+        showMessage('請選擇餐廳', 'error')
+        return
+      }
+
+      const btn = document.getElementById('submit-btn')
+      btn.disabled = true
+      btn.textContent = '送出中...'
+
+      try {
+        const res = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            restaurant_name: option.dataset.name,
+            restaurant_id: parseInt(option.value),
+            restaurant_url: option.dataset.url,
+            people,
+          })
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          showMessage('✅ 訂閱成功！確認信已寄出，請查收 Email', 'success')
+          document.getElementById('email-input').value = ''
+        } else {
+          showMessage(data.detail || '訂閱失敗，請重試', 'error')
+        }
+      } catch (e) {
+        showMessage('網路錯誤，請重試', 'error')
+      }
+
+      btn.disabled = false
+      btn.textContent = '開始監控，有位就通知我'
+    }
+
+    function showMessage(text, type) {
+      const el = document.getElementById('message')
+      el.textContent = text
+      el.className = `mt-4 text-sm text-center ${type === 'success' ? 'text-green-600' : 'text-red-500'}`
+      el.classList.remove('hidden')
+    }
+
+    loadRestaurants()
+  </script>
+</body>
+</html>

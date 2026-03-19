@@ -1,2 +1,5 @@
 requests
 schedule
+fastapi
+uvicorn[standard]
+pydantic[email]
