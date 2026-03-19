@@ -10,23 +10,30 @@
 
   <!-- Header -->
   <header class="bg-white border-b">
-    <div class="max-w-2xl mx-auto px-4 py-5">
-      <h1 class="text-2xl font-bold text-gray-900">🍽️ 訂位通知</h1>
-      <p class="text-gray-500 text-sm mt-1">熱門餐廳有空位時，第一時間通知你</p>
+    <div class="max-w-2xl mx-auto px-4 py-5 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">🍽️ 訂位通知</h1>
+        <p class="text-gray-500 text-sm mt-1">熱門餐廳有空位時，第一時間通知你</p>
+      </div>
+      <a href="/manage" class="text-sm text-blue-500 hover:underline">管理訂閱 →</a>
     </div>
   </header>
 
   <!-- Main -->
   <main class="max-w-2xl mx-auto px-4 py-8">
 
-    <!-- 說明 -->
-    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-8 text-sm text-blue-700">
-      選擇你想監控的餐廳，填入 Email，有空位時立刻寄信通知你。完全免費。
+    <!-- 即時狀態 -->
+    <div class="mb-8">
+      <h2 class="text-base font-semibold text-gray-700 mb-3">即時空位狀態</h2>
+      <div id="status-list" class="space-y-2">
+        <div class="text-sm text-gray-400 py-4 text-center">載入中...</div>
+      </div>
+      <p id="last-updated" class="text-xs text-gray-400 mt-2 text-right"></p>
     </div>
 
     <!-- 表單 -->
     <div class="bg-white rounded-xl shadow-sm border p-6">
-      <h2 class="text-lg font-semibold text-gray-800 mb-5">設定通知</h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-5">訂閱通知</h2>
 
       <!-- 餐廳選擇 -->
       <div class="mb-4">
@@ -52,10 +59,22 @@
       </div>
 
       <!-- Email -->
-      <div class="mb-6">
+      <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
         <input id="email-input" type="email" placeholder="your@email.com"
           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Telegram (選填) -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Telegram Chat ID <span class="text-gray-400 font-normal">（選填，可同時收 Telegram）</span>
+        </label>
+        <input id="telegram-input" type="text" placeholder="例如: 1234567890"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs text-gray-400 mt-1">
+          傳訊息給 <a href="https://t.me/userinfobot" target="_blank" class="text-blue-400 hover:underline">@userinfobot</a> 即可取得你的 Chat ID
+        </p>
       </div>
 
       <!-- 送出 -->
@@ -68,12 +87,6 @@
       <div id="message" class="mt-4 text-sm text-center hidden"></div>
     </div>
 
-    <!-- 目前監控的餐廳 -->
-    <div class="mt-8">
-      <h2 class="text-base font-semibold text-gray-700 mb-3">目前可監控的餐廳</h2>
-      <div id="restaurant-list" class="space-y-2"></div>
-    </div>
-
   </main>
 
   <footer class="text-center text-gray-400 text-xs py-8">
@@ -82,6 +95,58 @@
 
   <script>
     let restaurants = []
+    let statusMap = {}
+
+    async function loadStatus() {
+      try {
+        const res = await fetch('/api/status')
+        const data = await res.json()
+        statusMap = {}
+        data.forEach(r => { statusMap[r.name] = r })
+
+        const list = document.getElementById('status-list')
+        if (data.length === 0) {
+          list.innerHTML = '<div class="text-sm text-gray-400 py-4 text-center">尚無監控資料</div>'
+          return
+        }
+
+        list.innerHTML = data.map(r => {
+          const hasSlot = r.has_availability
+          const badge = hasSlot
+            ? '<span class="text-xs font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">有空位</span>'
+            : '<span class="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">無空位</span>'
+          const detail = hasSlot
+            ? `<span class="text-xs text-green-600">最近：${r.next_date}（共 ${r.total_dates} 天）</span>`
+            : '<span class="text-xs text-gray-400">目前無可預訂時段</span>'
+          const checked = r.last_checked
+            ? `上次檢查：${formatTime(r.last_checked)}`
+            : '尚未檢查'
+          return `
+            <div class="flex items-center justify-between bg-white border rounded-lg px-4 py-3">
+              <div class="flex-1 min-w-0 mr-3">
+                <div class="flex items-center gap-2 mb-0.5">
+                  ${badge}
+                  <span class="text-sm text-gray-800 truncate">${r.name}</span>
+                </div>
+                ${detail}
+              </div>
+              <div class="flex items-center gap-3 flex-shrink-0">
+                <span class="text-xs text-gray-400 hidden sm:block">${checked}</span>
+                <a href="${r.url}" target="_blank" class="text-xs text-blue-500 hover:underline">訂位 →</a>
+              </div>
+            </div>`
+        }).join('')
+
+        const times = data.filter(r => r.last_checked).map(r => r.last_checked)
+        if (times.length > 0) {
+          const latest = times.sort().reverse()[0]
+          document.getElementById('last-updated').textContent = `資料更新：${formatTime(latest)}`
+        }
+      } catch (e) {
+        document.getElementById('status-list').innerHTML =
+          '<div class="text-sm text-red-400 py-4 text-center">無法載入狀態</div>'
+      }
+    }
 
     async function loadRestaurants() {
       const res = await fetch('/api/restaurants')
@@ -93,15 +158,6 @@
           ${r.name}
         </option>`
       ).join('')
-
-      const list = document.getElementById('restaurant-list')
-      list.innerHTML = restaurants.map(r => `
-        <div class="flex items-center justify-between bg-white border rounded-lg px-4 py-3">
-          <span class="text-sm text-gray-700">${r.name}</span>
-          <a href="${r.url}" target="_blank"
-            class="text-xs text-blue-500 hover:underline">查看 →</a>
-        </div>
-      `).join('')
     }
 
     async function subscribe() {
@@ -109,7 +165,7 @@
       const option = select.selectedOptions[0]
       const email = document.getElementById('email-input').value.trim()
       const people = parseInt(document.getElementById('people-select').value)
-      const msgEl = document.getElementById('message')
+      const telegram = document.getElementById('telegram-input').value.trim()
 
       if (!email || !email.includes('@')) {
         showMessage('請輸入正確的 Email', 'error')
@@ -134,6 +190,7 @@
             restaurant_id: parseInt(option.value),
             restaurant_url: option.dataset.url,
             people,
+            telegram_chat_id: telegram || null,
           })
         })
 
@@ -142,6 +199,7 @@
         if (res.ok) {
           showMessage('✅ 訂閱成功！確認信已寄出，請查收 Email', 'success')
           document.getElementById('email-input').value = ''
+          document.getElementById('telegram-input').value = ''
         } else {
           showMessage(data.detail || '訂閱失敗，請重試', 'error')
         }
@@ -160,7 +218,17 @@
       el.classList.remove('hidden')
     }
 
+    function formatTime(iso) {
+      if (!iso) return ''
+      const d = new Date(iso)
+      const pad = n => String(n).padStart(2, '0')
+      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+    }
+
+    loadStatus()
     loadRestaurants()
+    // 每 5 分鐘刷新狀態
+    setInterval(loadStatus, 5 * 60 * 1000)
   </script>
 </body>
 </html>

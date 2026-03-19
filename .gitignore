@@ -2,3 +2,12 @@
 __pycache__/
 .DS_Store
 .claude/
+chrome_profile/
+chrome_profile_temp/
+subscriptions.db
+*.png
+*.html
+!templates/*.html
+*.json
+!config.json
+!railway.json

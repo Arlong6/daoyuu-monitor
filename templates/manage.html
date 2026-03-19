@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理訂閱 - 訂位通知</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white border-b">
+    <div class="max-w-2xl mx-auto px-4 py-5 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">📋 管理訂閱</h1>
+        <p class="text-gray-500 text-sm mt-1">查看並管理你的訂位通知</p>
+      </div>
+      <a href="/" class="text-sm text-blue-500 hover:underline">← 新增訂閱</a>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-2xl mx-auto px-4 py-8">
+
+    <!-- Email 查詢 -->
+    <div class="bg-white rounded-xl shadow-sm border p-6 mb-6">
+      <h2 class="text-base font-semibold text-gray-800 mb-4">輸入 Email 查詢你的訂閱</h2>
+      <div class="flex gap-2">
+        <input id="email-input" type="email" placeholder="your@email.com"
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onkeydown="if(event.key==='Enter') loadSubs()">
+        <button onclick="loadSubs()"
+          class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition whitespace-nowrap">
+          查詢
+        </button>
+      </div>
+    </div>
+
+    <!-- 訂閱列表 -->
+    <div id="subs-section" class="hidden">
+      <h2 class="text-base font-semibold text-gray-700 mb-3">我的訂閱</h2>
+      <div id="subs-list" class="space-y-3"></div>
+    </div>
+
+    <div id="empty-msg" class="hidden text-center text-gray-400 text-sm py-8">
+      找不到此 Email 的訂閱記錄
+    </div>
+
+    <div id="loading-msg" class="hidden text-center text-gray-400 text-sm py-8">
+      查詢中...
+    </div>
+
+  </main>
+
+  <footer class="text-center text-gray-400 text-xs py-8">
+    有任何問題，取消訂閱連結也在確認信裡
+  </footer>
+
+  <script>
+    async function loadSubs() {
+      const email = document.getElementById('email-input').value.trim()
+      if (!email || !email.includes('@')) {
+        alert('請輸入正確的 Email')
+        return
+      }
+
+      document.getElementById('subs-section').classList.add('hidden')
+      document.getElementById('empty-msg').classList.add('hidden')
+      document.getElementById('loading-msg').classList.remove('hidden')
+
+      try {
+        const res = await fetch(`/api/my-subscriptions?email=${encodeURIComponent(email)}`)
+        const subs = await res.json()
+
+        document.getElementById('loading-msg').classList.add('hidden')
+
+        if (!Array.isArray(subs) || subs.length === 0) {
+          document.getElementById('empty-msg').classList.remove('hidden')
+          return
+        }
+
+        document.getElementById('subs-section').classList.remove('hidden')
+        document.getElementById('subs-list').innerHTML = subs.map(s => `
+          <div class="bg-white border rounded-xl px-4 py-4" id="sub-${s.token}">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-medium text-gray-800">${s.restaurant_name}</div>
+                <div class="text-sm text-gray-500 mt-0.5">${s.people} 人 · 訂閱於 ${formatDate(s.created_at)}</div>
+                <a href="${s.restaurant_url}" target="_blank"
+                  class="text-xs text-blue-500 hover:underline mt-1 inline-block">查看餐廳 →</a>
+              </div>
+              <button onclick="cancelSub('${s.token}')"
+                class="text-sm text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-3 py-1 rounded-lg transition flex-shrink-0">
+                取消訂閱
+              </button>
+            </div>
+          </div>
+        `).join('')
+
+      } catch (e) {
+        document.getElementById('loading-msg').classList.add('hidden')
+        alert('查詢失敗，請重試')
+      }
+    }
+
+    async function cancelSub(token) {
+      if (!confirm('確定要取消此訂閱？')) return
+
+      try {
+        const res = await fetch(`/unsubscribe/${token}`)
+        // 無論回應為何，移除該卡片
+        const el = document.getElementById(`sub-${token}`)
+        if (el) {
+          el.innerHTML = `
+            <div class="text-sm text-gray-400 text-center py-2">✅ 已取消訂閱</div>`
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.5s'
+            el.style.opacity = '0'
+            setTimeout(() => el.remove(), 500)
+          }, 1000)
+        }
+
+        // 若全部取消，顯示空訊息
+        setTimeout(() => {
+          const remaining = document.querySelectorAll('#subs-list > div[id^="sub-"]')
+          if (remaining.length === 0) {
+            document.getElementById('subs-section').classList.add('hidden')
+            document.getElementById('empty-msg').classList.remove('hidden')
+          }
+        }, 1600)
+
+      } catch (e) {
+        alert('取消失敗，請重試或點擊確認信中的取消連結')
+      }
+    }
+
+    function formatDate(iso) {
+      if (!iso) return ''
+      const d = new Date(iso)
+      return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`
+    }
+
+    // 若 URL 帶有 email query string，自動查詢
+    const urlParams = new URLSearchParams(window.location.search)
+    const preEmail = urlParams.get('email')
+    if (preEmail) {
+      document.getElementById('email-input').value = preEmail
+      loadSubs()
+    }
+  </script>
+</body>
+</html>
