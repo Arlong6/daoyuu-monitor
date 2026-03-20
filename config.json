@@ -422,6 +422,42 @@
         "people": 4,
         "target_times": [],
         "url": "https://tw.eztable.com/restaurant/13752"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15207,
+        "restaurant_name": "青隅-台北文華東方酒店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15207"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 668,
+        "restaurant_name": "饗聚廚房-台北花園大酒店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/668"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 11029,
+        "restaurant_name": "敘日-台北六福萬怡酒店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/11029"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14153,
+        "restaurant_name": "悅市集-新北板橋希爾頓",
+        "region": "新北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14153"
       }
     ]
   },
