@@ -602,9 +602,11 @@
     el.style.display = 'block'
   }
 
-  loadStatus()
-  loadRestaurants()
-  setInterval(loadStatus, 5 * 60 * 1000)
+  // 先載入地區資料，再渲染卡片（確保 regionMap 已填好）
+  loadRestaurants().then(() => {
+    loadStatus()
+    setInterval(loadStatus, 5 * 60 * 1000)
+  })
 </script>
 </body>
 </html>
