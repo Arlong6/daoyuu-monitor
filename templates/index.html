@@ -153,6 +153,26 @@
       text-align: center; padding: 40px; color: var(--muted); font-size: 0.85rem;
     }
 
+    /* ── Custom restaurant lookup ── */
+    .lookup-toggle {
+      font-size: 0.78rem; color: var(--accent); background: none; border: none;
+      cursor: pointer; padding: 0; font-family: inherit; margin-bottom: 14px;
+      display: block;
+    }
+    .lookup-toggle:hover { text-decoration: underline; }
+    .lookup-box {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; margin-bottom: 14px; display: none;
+    }
+    .lookup-box.open { display: block; }
+    .lookup-row { display: flex; gap: 8px; }
+    .lookup-result {
+      margin-top: 10px; font-size: 0.8rem; padding: 8px 12px;
+      border-radius: 8px; display: none;
+    }
+    .lookup-result.found { background: #0d1f14; color: #4ade80; border: 1px solid var(--green-dim); }
+    .lookup-result.error { background: var(--red-dim); color: #f87171; }
+
     /* ── Subscribe form ── */
     .form-card {
       background: var(--surface);
@@ -328,6 +348,27 @@
       </div>
     </div>
 
+    <!-- 自訂餐廳 -->
+    <button class="lookup-toggle" onclick="toggleLookup()">＋ 找不到你的餐廳？新增 EZTABLE 餐廳</button>
+    <div class="lookup-box" id="lookup-box">
+      <label style="margin-bottom:8px;display:block">貼上 EZTABLE 餐廳網址</label>
+      <div class="lookup-row">
+        <input id="lookup-url" type="text" class="form-control"
+          placeholder="https://tw.eztable.com/restaurant/XXXXX"
+          onkeydown="if(event.key==='Enter') lookupRestaurant()">
+        <button class="submit-btn" style="width:auto;padding:10px 16px;margin:0;white-space:nowrap"
+          id="lookup-btn" onclick="lookupRestaurant()">查詢</button>
+      </div>
+      <div id="lookup-result" class="lookup-result"></div>
+
+      <!-- 邀請碼（查到餐廳後才顯示）-->
+      <div id="invite-section" style="display:none;margin-top:12px">
+        <label>邀請碼</label>
+        <input id="invite-input" type="text" class="form-control" placeholder="輸入邀請碼">
+        <div class="form-hint">需要邀請碼才能新增非名單內的餐廳</div>
+      </div>
+    </div>
+
     <button class="submit-btn" id="submit-btn" onclick="subscribe()">
       有位就通知我 →
     </button>
@@ -455,15 +496,71 @@
     ).join('')
   }
 
+  // 自訂餐廳查詢
+  let customRestaurant = null
+
+  function toggleLookup() {
+    const box = document.getElementById('lookup-box')
+    box.classList.toggle('open')
+  }
+
+  async function lookupRestaurant() {
+    const url = document.getElementById('lookup-url').value.trim()
+    const resultEl = document.getElementById('lookup-result')
+    const btn = document.getElementById('lookup-btn')
+    if (!url) return
+
+    btn.disabled = true; btn.textContent = '查詢中…'
+    resultEl.style.display = 'none'
+    customRestaurant = null
+    document.getElementById('invite-section').style.display = 'none'
+
+    try {
+      const res = await fetch(`/api/lookup-restaurant?url=${encodeURIComponent(url)}`)
+      const data = await res.json()
+      if (res.ok) {
+        customRestaurant = data
+        resultEl.className = 'lookup-result found'
+        resultEl.textContent = `找到：${data.restaurant_name}`
+        resultEl.style.display = 'block'
+        document.getElementById('invite-section').style.display = 'block'
+        // 把找到的餐廳加到 select
+        const select = document.getElementById('restaurant-select')
+        const existing = [...select.options].find(o => o.value == data.restaurant_id)
+        if (!existing) {
+          const opt = new Option(data.restaurant_name, data.restaurant_id)
+          opt.dataset.name = data.restaurant_name
+          opt.dataset.url = data.restaurant_url
+          opt.dataset.people = '4'
+          opt.dataset.custom = '1'
+          select.add(opt)
+        }
+        select.value = data.restaurant_id
+      } else {
+        resultEl.className = 'lookup-result error'
+        resultEl.textContent = data.detail || '查詢失敗'
+        resultEl.style.display = 'block'
+      }
+    } catch {
+      resultEl.className = 'lookup-result error'
+      resultEl.textContent = '網路錯誤，請重試'
+      resultEl.style.display = 'block'
+    }
+    btn.disabled = false; btn.textContent = '查詢'
+  }
+
   async function subscribe() {
     const select = document.getElementById('restaurant-select')
     const opt = select.selectedOptions[0]
     const email = document.getElementById('email-input').value.trim()
     const people = parseInt(document.getElementById('people-select').value)
     const telegram = document.getElementById('telegram-input').value.trim()
+    const inviteCode = document.getElementById('invite-input')?.value.trim()
+    const isCustom = opt?.dataset.custom === '1'
 
     if (!email.includes('@')) return showMsg('請輸入正確的 Email', 'error')
     if (!opt?.value) return showMsg('請選擇餐廳', 'error')
+    if (isCustom && !inviteCode) return showMsg('請輸入邀請碼', 'error')
 
     const btn = document.getElementById('submit-btn')
     btn.disabled = true; btn.textContent = '送出中…'
@@ -478,6 +575,7 @@
           restaurant_id: parseInt(opt.value),
           restaurant_url: opt.dataset.url,
           telegram_chat_id: telegram || null,
+          invite_code: inviteCode || null,
         })
       })
       const data = await res.json()
@@ -485,6 +583,10 @@
         showMsg('✅ 訂閱成功！確認信已寄出', 'success')
         document.getElementById('email-input').value = ''
         document.getElementById('telegram-input').value = ''
+        if (inviteCode) document.getElementById('invite-input').value = ''
+        // 關掉自訂區塊
+        document.getElementById('lookup-box').classList.remove('open')
+        customRestaurant = null
       } else {
         showMsg(data.detail || '訂閱失敗，請重試', 'error')
       }

@@ -327,6 +327,7 @@ class SubscribeRequest(BaseModel):
     restaurant_url: str
     people: int = 2
     telegram_chat_id: Optional[str] = None
+    invite_code: Optional[str] = None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -341,6 +342,44 @@ async def manage_page():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', 'manage.html')
     with open(path, 'r', encoding='utf-8') as f:
         return f.read()
+
+
+@app.get("/api/lookup-restaurant")
+async def lookup_restaurant(url: str):
+    """從 EZTABLE 網址查詢餐廳名稱與 ID"""
+    import re as _re
+    # 支援 https://tw.eztable.com/restaurant/17778 格式
+    m = _re.search(r'eztable\.com/restaurant/(\d+)', url)
+    if not m:
+        raise HTTPException(status_code=400, detail="請貼上正確的 EZTABLE 餐廳網址")
+
+    restaurant_id = int(m.group(1))
+    restaurant_url = f"https://tw.eztable.com/restaurant/{restaurant_id}"
+
+    # 驗證此 ID 有效
+    data = eztable_api_get('/v3/hotpot/quota', params={'restaurant_id': restaurant_id, 'people': 2})
+    if data is None:
+        raise HTTPException(status_code=404, detail="找不到此餐廳，請確認網址是否正確")
+
+    # 抓餐廳名稱
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'}
+        resp = requests.get(restaurant_url, headers=headers, timeout=10)
+        h1 = _re.search(r'<h1[^>]*>([^<]+)</h1>', resp.text)
+        if h1:
+            raw = h1.group(1).strip()
+            name = _re.sub(r'^\d+\s*月\s*', '', raw)
+            name = _re.sub(r'\s*訂位》.*', '', name).strip()
+        else:
+            name = f"餐廳 #{restaurant_id}"
+    except Exception:
+        name = f"餐廳 #{restaurant_id}"
+
+    return {
+        "restaurant_id": restaurant_id,
+        "restaurant_name": name,
+        "restaurant_url": restaurant_url,
+    }
 
 
 @app.get("/api/restaurants")
@@ -398,6 +437,20 @@ async def my_subscriptions(email: str):
 
 @app.post("/api/subscribe")
 async def subscribe(req: SubscribeRequest):
+    config = load_config()
+
+    # 判斷是否為「自訂餐廳」（不在 config.json 名單內）
+    known_ids = {r['restaurant_id'] for r in config.get('eztable', {}).get('restaurants', [])}
+    is_custom = req.restaurant_id not in known_ids
+
+    # 自訂餐廳需要邀請碼
+    if is_custom:
+        required_code = os.environ.get('INVITE_CODE') or config.get('invite_code', '')
+        if not required_code:
+            raise HTTPException(status_code=403, detail="目前不開放新增自訂餐廳")
+        if req.invite_code != required_code:
+            raise HTTPException(status_code=403, detail="邀請碼錯誤")
+
     conn = get_db()
     existing = conn.execute(
         "SELECT id FROM subscriptions WHERE email=? AND restaurant_id=? AND active=1",
