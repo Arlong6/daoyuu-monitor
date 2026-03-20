@@ -94,11 +94,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
     .sub-card:hover { border-color: #444; }
-    .sub-icon {
-      width: 42px; height: 42px; background: var(--surface2);
-      border-radius: 10px; display: flex; align-items: center;
-      justify-content: center; font-size: 1.2rem; flex-shrink: 0;
-    }
     .sub-body { flex: 1; min-width: 0; }
     .sub-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .sub-meta { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
@@ -157,16 +152,6 @@
 <footer>訂位雷達 · 若有問題，取消連結也在確認信裡</footer>
 
 <script>
-  const ICONS = {
-    '島語': '🏝️', '漢來': '🦞', '饗食': '🍽️', '十二廚': '⭐',
-    '彩匯': '🌟', '欣葉': '🍣', '夠夠肉': '🥩', '乾杯': '🍻',
-    '燒鳥': '🍢', '北澤': '🥩', '一頭牛': '🐄', '爵旋': '🔥',
-    '原燒': '🔥', '紅花': '🌸',
-  }
-  function getIcon(name) {
-    for (const [k, v] of Object.entries(ICONS)) if (name.includes(k)) return v
-    return '🍴'
-  }
   function formatDate(iso) {
     if (!iso) return ''
     const d = new Date(iso)
@@ -195,8 +180,7 @@
 
       result.innerHTML = `<div class="subs-list">${subs.map((s, i) => `
         <div class="sub-card" id="sub-${s.token}" style="animation-delay:${i*0.06}s">
-          <div class="sub-icon">${getIcon(s.restaurant_name)}</div>
-          <div class="sub-body">
+            <div class="sub-body">
             <div class="sub-name">${s.restaurant_name}</div>
             <div class="sub-meta">${s.people} 人 · 訂閱於 ${formatDate(s.created_at)}</div>
             <a class="sub-link" href="${s.restaurant_url}" target="_blank">查看餐廳 ↗</a>
