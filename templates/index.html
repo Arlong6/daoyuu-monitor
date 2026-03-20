@@ -3,52 +3,304 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>訂位通知 - 熱門餐廳空位提醒</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>訂位雷達 — 熱門餐廳空位即時偵測</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f11;
+      --surface: #1a1a1f;
+      --surface2: #232329;
+      --border: #2e2e38;
+      --text: #f0f0f3;
+      --muted: #8b8b9a;
+      --green: #22c55e;
+      --green-dim: #16532d;
+      --red-dim: #3b1111;
+      --amber: #f59e0b;
+      --accent: #7c6af7;
+      --accent-dim: #2d2857;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,15,17,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-inner {
+      max-width: 900px; margin: auto; padding: 0 20px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+    .logo-text { font-size: 1rem; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 0.7rem; color: var(--muted); margin-top: 1px; }
+    .nav-link {
+      font-size: 0.8rem; color: var(--muted); text-decoration: none;
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .nav-link:hover { color: var(--text); border-color: #555; }
+
+    /* ── Main ── */
+    main { max-width: 900px; margin: auto; padding: 40px 20px 80px; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; padding: 40px 0 48px; }
+    .hero h1 {
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      font-weight: 700; letter-spacing: -1px; line-height: 1.15;
+      background: linear-gradient(135deg, #fff 30%, #aaa 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { color: var(--muted); margin-top: 12px; font-size: 0.95rem; line-height: 1.6; }
+    .hero-stats {
+      display: flex; justify-content: center; gap: 32px; margin-top: 28px;
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── Section title ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title { font-size: 0.8rem; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.72rem; color: var(--green);
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      animation: pulse 1.8s infinite;
+    }
+
+    /* ── Search ── */
+    .search-wrap { position: relative; margin-bottom: 16px; }
+    .search-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); pointer-events: none; font-size: 0.9rem;
+    }
+    #search-input {
+      width: 100%; padding: 10px 14px 10px 40px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 0.88rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    #search-input::placeholder { color: var(--muted); }
+    #search-input:focus { border-color: var(--accent); }
+
+    /* ── Restaurant cards ── */
+    .cards-grid { display: flex; flex-direction: column; gap: 8px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 14px;
+      transition: border-color 0.2s, transform 0.15s;
+      animation: fadeIn 0.35s ease both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card:hover { border-color: #444; transform: translateY(-1px); }
+    .card.has-slot { border-color: var(--green-dim); background: #0d1f14; }
+    .card.has-slot:hover { border-color: var(--green); }
+
+    .card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; flex-shrink: 0;
+    }
+    .card.has-slot .card-icon { background: var(--green-dim); }
+
+    .card-body { flex: 1; min-width: 0; }
+    .card-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-detail { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+    .card.has-slot .card-detail { color: #4ade80; }
+
+    .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+    .badge {
+      font-size: 0.7rem; font-weight: 600; padding: 3px 9px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-green { background: var(--green-dim); color: var(--green); }
+    .badge-gray  { background: var(--surface2); color: var(--muted); }
+    .card-link {
+      font-size: 0.72rem; color: var(--accent); text-decoration: none;
+      opacity: 0.8; transition: opacity 0.15s;
+    }
+    .card-link:hover { opacity: 1; text-decoration: underline; }
+    .card-checked { font-size: 0.68rem; color: var(--muted); }
+
+    .empty-state {
+      text-align: center; padding: 40px; color: var(--muted); font-size: 0.85rem;
+    }
+
+    /* ── Subscribe form ── */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-top: 40px;
+    }
+    .form-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .form-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 24px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { display: block; font-size: 0.78rem; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+    .form-control {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 0.88rem;
+      outline: none; transition: border-color 0.2s; font-family: inherit;
+    }
+    .form-control::placeholder { color: #555; }
+    .form-control:focus { border-color: var(--accent); }
+
+    .form-hint { font-size: 0.7rem; color: var(--muted); margin-top: 5px; }
+    .form-hint a { color: var(--accent); text-decoration: none; }
+    .form-hint a:hover { text-decoration: underline; }
+
+    .submit-btn {
+      width: 100%; padding: 12px;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 10px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover { opacity: 0.9; }
+    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .form-msg {
+      margin-top: 12px; font-size: 0.82rem; text-align: center;
+      padding: 10px; border-radius: 8px; display: none;
+    }
+    .form-msg.success { background: var(--green-dim); color: var(--green); }
+    .form-msg.error   { background: var(--red-dim); color: #f87171; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 32px 20px;
+      color: var(--muted); font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px; height: 60px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body>
 
-  <!-- Header -->
-  <header class="bg-white border-b">
-    <div class="max-w-2xl mx-auto px-4 py-5 flex items-center justify-between">
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-dot"></div>
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">🍽️ 訂位通知</h1>
-        <p class="text-gray-500 text-sm mt-1">熱門餐廳有空位時，第一時間通知你</p>
+        <div class="logo-text">訂位雷達</div>
+        <div class="logo-sub">每 30 分鐘自動掃描</div>
       </div>
-      <a href="/manage" class="text-sm text-blue-500 hover:underline">管理訂閱 →</a>
     </div>
-  </header>
+    <a href="/manage" class="nav-link">管理訂閱</a>
+  </div>
+</header>
 
-  <!-- Main -->
-  <main class="max-w-2xl mx-auto px-4 py-8">
+<main>
 
-    <!-- 即時狀態 -->
-    <div class="mb-8">
-      <h2 class="text-base font-semibold text-gray-700 mb-3">即時空位狀態</h2>
-      <div id="status-list" class="space-y-2">
-        <div class="text-sm text-gray-400 py-4 text-center">載入中...</div>
+  <!-- Hero -->
+  <div class="hero">
+    <h1>熱門餐廳有位了，<br>你第一個知道</h1>
+    <p>自動監控 EZTABLE 熱門難訂餐廳<br>有空位時立即寄信＋Telegram 通知</p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">監控餐廳</div>
       </div>
-      <p id="last-updated" class="text-xs text-gray-400 mt-2 text-right"></p>
+      <div class="stat">
+        <div class="stat-num" id="stat-avail">—</div>
+        <div class="stat-label">目前有位</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">30m</div>
+        <div class="stat-label">掃描間隔</div>
+      </div>
     </div>
+  </div>
 
-    <!-- 表單 -->
-    <div class="bg-white rounded-xl shadow-sm border p-6">
-      <h2 class="text-lg font-semibold text-gray-800 mb-5">訂閱通知</h2>
+  <!-- Status -->
+  <div class="section-header">
+    <span class="section-title">即時空位狀態</span>
+    <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+  </div>
 
-      <!-- 餐廳選擇 -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">餐廳</label>
-        <select id="restaurant-select"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">載入中...</option>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="search-input" type="text" placeholder="搜尋餐廳名稱…" oninput="filterCards()">
+  </div>
+
+  <div id="cards" class="cards-grid">
+    <div class="skeleton"></div>
+    <div class="skeleton" style="animation-delay:0.1s"></div>
+    <div class="skeleton" style="animation-delay:0.2s"></div>
+  </div>
+
+  <p id="last-updated" style="font-size:0.7rem;color:var(--muted);text-align:right;margin-top:10px;"></p>
+
+  <!-- Subscribe -->
+  <div class="form-card">
+    <div class="form-title">訂閱空位通知</div>
+    <div class="form-sub">有空位時自動發送 Email＋Telegram，完全免費</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>餐廳</label>
+        <select id="restaurant-select" class="form-control">
+          <option value="">載入中…</option>
         </select>
       </div>
-
-      <!-- 人數 -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">用餐人數</label>
-        <select id="people-select"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <div class="form-group">
+        <label>用餐人數</label>
+        <select id="people-select" class="form-control">
           <option value="2">2 人</option>
           <option value="3">3 人</option>
           <option value="4" selected>4 人</option>
@@ -57,178 +309,176 @@
           <option value="8">8 人</option>
         </select>
       </div>
-
-      <!-- Email -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input id="email-input" type="email" placeholder="your@email.com"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <div class="form-group">
+        <label>Email</label>
+        <input id="email-input" type="email" class="form-control" placeholder="your@email.com">
       </div>
-
-      <!-- Telegram (選填) -->
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-1">
-          Telegram Chat ID <span class="text-gray-400 font-normal">（選填，可同時收 Telegram）</span>
-        </label>
-        <input id="telegram-input" type="text" placeholder="例如: 1234567890"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <p class="text-xs text-gray-400 mt-1">
-          傳訊息給 <a href="https://t.me/userinfobot" target="_blank" class="text-blue-400 hover:underline">@userinfobot</a> 即可取得你的 Chat ID
-        </p>
+      <div class="form-group">
+        <label>Telegram Chat ID <span style="font-weight:400;opacity:0.6">（選填）</span></label>
+        <input id="telegram-input" type="text" class="form-control" placeholder="例：7110379672">
+        <div class="form-hint">傳訊息給 <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> 取得</div>
       </div>
-
-      <!-- 送出 -->
-      <button id="submit-btn" onclick="subscribe()"
-        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition">
-        開始監控，有位就通知我
-      </button>
-
-      <!-- 結果訊息 -->
-      <div id="message" class="mt-4 text-sm text-center hidden"></div>
     </div>
 
-  </main>
+    <button class="submit-btn" id="submit-btn" onclick="subscribe()">
+      有位就通知我 →
+    </button>
+    <div class="form-msg" id="form-msg"></div>
+  </div>
 
-  <footer class="text-center text-gray-400 text-xs py-8">
-    每 30 分鐘自動檢查一次 · 有空位立即通知
-  </footer>
+</main>
 
-  <script>
-    let restaurants = []
-    let statusMap = {}
+<footer>
+  訂位雷達 · 資料來源 EZTABLE · 每 30 分鐘自動掃描
+</footer>
 
-    async function loadStatus() {
-      try {
-        const res = await fetch('/api/status')
-        const data = await res.json()
-        statusMap = {}
-        data.forEach(r => { statusMap[r.name] = r })
+<script>
+  let allCards = []
 
-        const list = document.getElementById('status-list')
-        if (data.length === 0) {
-          list.innerHTML = '<div class="text-sm text-gray-400 py-4 text-center">尚無監控資料</div>'
-          return
-        }
+  const ICONS = {
+    '島語': '🏝️', '漢來': '🦞', '饗食': '🍽️', '十二廚': '⭐',
+    '彩匯': '🌟', '欣葉': '🍣', '夠夠肉': '🥩', '乾杯': '🍻',
+    '燒鳥': '🍢', '北澤': '🥩', '一頭牛': '🐄', '爵旋': '🔥',
+    '原燒': '🔥', '紅花': '🌸',
+  }
 
-        list.innerHTML = data.map(r => {
-          const hasSlot = r.has_availability
-          const badge = hasSlot
-            ? '<span class="text-xs font-medium bg-green-100 text-green-700 px-2 py-0.5 rounded-full">有空位</span>'
-            : '<span class="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">無空位</span>'
-          const detail = hasSlot
-            ? `<span class="text-xs text-green-600">最近：${r.next_date}（共 ${r.total_dates} 天）</span>`
-            : '<span class="text-xs text-gray-400">目前無可預訂時段</span>'
-          const checked = r.last_checked
-            ? `上次檢查：${formatTime(r.last_checked)}`
-            : '尚未檢查'
-          return `
-            <div class="flex items-center justify-between bg-white border rounded-lg px-4 py-3">
-              <div class="flex-1 min-w-0 mr-3">
-                <div class="flex items-center gap-2 mb-0.5">
-                  ${badge}
-                  <span class="text-sm text-gray-800 truncate">${r.name}</span>
-                </div>
-                ${detail}
-              </div>
-              <div class="flex items-center gap-3 flex-shrink-0">
-                <span class="text-xs text-gray-400 hidden sm:block">${checked}</span>
-                <a href="${r.url}" target="_blank" class="text-xs text-blue-500 hover:underline">訂位 →</a>
-              </div>
-            </div>`
-        }).join('')
-
-        const times = data.filter(r => r.last_checked).map(r => r.last_checked)
-        if (times.length > 0) {
-          const latest = times.sort().reverse()[0]
-          document.getElementById('last-updated').textContent = `資料更新：${formatTime(latest)}`
-        }
-      } catch (e) {
-        document.getElementById('status-list').innerHTML =
-          '<div class="text-sm text-red-400 py-4 text-center">無法載入狀態</div>'
-      }
+  function getIcon(name) {
+    for (const [k, v] of Object.entries(ICONS)) {
+      if (name.includes(k)) return v
     }
+    return '🍴'
+  }
 
-    async function loadRestaurants() {
-      const res = await fetch('/api/restaurants')
-      restaurants = await res.json()
+  function formatTime(iso) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const pad = n => String(n).padStart(2, '0')
+    return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
 
-      const select = document.getElementById('restaurant-select')
-      select.innerHTML = restaurants.map(r =>
-        `<option value="${r.id}" data-name="${r.name}" data-url="${r.url}" data-people="${r.people}">
-          ${r.name}
-        </option>`
-      ).join('')
+  function buildCard(r, index) {
+    const has = r.has_availability
+    const icon = getIcon(r.name)
+    const detail = has
+      ? `最近可訂：${r.next_date}（共 ${r.total_dates} 天）`
+      : '目前無空位'
+    const checked = r.last_checked ? `更新 ${formatTime(r.last_checked)}` : '尚未掃描'
+
+    return `
+      <div class="card ${has ? 'has-slot' : ''}" data-name="${r.name}" style="animation-delay:${index * 0.04}s">
+        <div class="card-icon">${icon}</div>
+        <div class="card-body">
+          <div class="card-name">${r.name}</div>
+          <div class="card-detail">${detail}</div>
+        </div>
+        <div class="card-right">
+          <span class="badge ${has ? 'badge-green' : 'badge-gray'}">${has ? '✦ 有空位' : '無空位'}</span>
+          <a class="card-link" href="${r.url}" target="_blank">前往訂位 ↗</a>
+          <span class="card-checked">${checked}</span>
+        </div>
+      </div>`
+  }
+
+  function filterCards() {
+    const q = document.getElementById('search-input').value.trim().toLowerCase()
+    const container = document.getElementById('cards')
+    const cards = container.querySelectorAll('.card')
+    let shown = 0
+    cards.forEach(c => {
+      const match = c.dataset.name.toLowerCase().includes(q)
+      c.style.display = match ? '' : 'none'
+      if (match) shown++
+    })
+    const empty = document.getElementById('empty-search')
+    if (empty) empty.remove()
+    if (shown === 0 && q) {
+      container.insertAdjacentHTML('beforeend',
+        `<div id="empty-search" class="empty-state">找不到「${q}」相關餐廳</div>`)
     }
+  }
 
-    async function subscribe() {
-      const select = document.getElementById('restaurant-select')
-      const option = select.selectedOptions[0]
-      const email = document.getElementById('email-input').value.trim()
-      const people = parseInt(document.getElementById('people-select').value)
-      const telegram = document.getElementById('telegram-input').value.trim()
+  async function loadStatus() {
+    try {
+      const res = await fetch('/api/status')
+      const data = await res.json()
+      allCards = data
 
-      if (!email || !email.includes('@')) {
-        showMessage('請輸入正確的 Email', 'error')
-        return
-      }
-      if (!option || !option.value) {
-        showMessage('請選擇餐廳', 'error')
-        return
-      }
+      const avail = data.filter(r => r.has_availability).length
+      document.getElementById('stat-total').textContent = data.length
+      document.getElementById('stat-avail').textContent = avail
 
-      const btn = document.getElementById('submit-btn')
-      btn.disabled = true
-      btn.textContent = '送出中...'
+      // 有位的排前面
+      const sorted = [...data].sort((a, b) => b.has_availability - a.has_availability)
+      document.getElementById('cards').innerHTML = sorted.length
+        ? sorted.map((r, i) => buildCard(r, i)).join('')
+        : '<div class="empty-state">尚無監控資料，請稍後再試</div>'
 
-      try {
-        const res = await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            restaurant_name: option.dataset.name,
-            restaurant_id: parseInt(option.value),
-            restaurant_url: option.dataset.url,
-            people,
-            telegram_chat_id: telegram || null,
-          })
+      const times = data.filter(r => r.last_checked).map(r => r.last_checked).sort().reverse()
+      if (times.length)
+        document.getElementById('last-updated').textContent = `資料更新於 ${formatTime(times[0])}`
+    } catch {
+      document.getElementById('cards').innerHTML =
+        '<div class="empty-state">無法載入狀態，請重新整理</div>'
+    }
+  }
+
+  async function loadRestaurants() {
+    const res = await fetch('/api/restaurants')
+    const list = await res.json()
+    const select = document.getElementById('restaurant-select')
+    select.innerHTML = list.map(r =>
+      `<option value="${r.id}" data-name="${r.name}" data-url="${r.url}" data-people="${r.people}">${r.name}</option>`
+    ).join('')
+  }
+
+  async function subscribe() {
+    const select = document.getElementById('restaurant-select')
+    const opt = select.selectedOptions[0]
+    const email = document.getElementById('email-input').value.trim()
+    const people = parseInt(document.getElementById('people-select').value)
+    const telegram = document.getElementById('telegram-input').value.trim()
+
+    if (!email.includes('@')) return showMsg('請輸入正確的 Email', 'error')
+    if (!opt?.value) return showMsg('請選擇餐廳', 'error')
+
+    const btn = document.getElementById('submit-btn')
+    btn.disabled = true; btn.textContent = '送出中…'
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, people,
+          restaurant_name: opt.dataset.name,
+          restaurant_id: parseInt(opt.value),
+          restaurant_url: opt.dataset.url,
+          telegram_chat_id: telegram || null,
         })
-
-        const data = await res.json()
-
-        if (res.ok) {
-          showMessage('✅ 訂閱成功！確認信已寄出，請查收 Email', 'success')
-          document.getElementById('email-input').value = ''
-          document.getElementById('telegram-input').value = ''
-        } else {
-          showMessage(data.detail || '訂閱失敗，請重試', 'error')
-        }
-      } catch (e) {
-        showMessage('網路錯誤，請重試', 'error')
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showMsg('✅ 訂閱成功！確認信已寄出', 'success')
+        document.getElementById('email-input').value = ''
+        document.getElementById('telegram-input').value = ''
+      } else {
+        showMsg(data.detail || '訂閱失敗，請重試', 'error')
       }
+    } catch { showMsg('網路錯誤，請重試', 'error') }
 
-      btn.disabled = false
-      btn.textContent = '開始監控，有位就通知我'
-    }
+    btn.disabled = false; btn.textContent = '有位就通知我 →'
+  }
 
-    function showMessage(text, type) {
-      const el = document.getElementById('message')
-      el.textContent = text
-      el.className = `mt-4 text-sm text-center ${type === 'success' ? 'text-green-600' : 'text-red-500'}`
-      el.classList.remove('hidden')
-    }
+  function showMsg(text, type) {
+    const el = document.getElementById('form-msg')
+    el.textContent = text
+    el.className = `form-msg ${type}`
+    el.style.display = 'block'
+  }
 
-    function formatTime(iso) {
-      if (!iso) return ''
-      const d = new Date(iso)
-      const pad = n => String(n).padStart(2, '0')
-      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-    }
-
-    loadStatus()
-    loadRestaurants()
-    // 每 5 分鐘刷新狀態
-    setInterval(loadStatus, 5 * 60 * 1000)
-  </script>
+  loadStatus()
+  loadRestaurants()
+  setInterval(loadStatus, 5 * 60 * 1000)
+</script>
 </body>
 </html>
