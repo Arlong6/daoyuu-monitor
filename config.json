@@ -32,6 +32,166 @@
         "people": 4,
         "target_times": [],
         "url": "https://tw.eztable.com/restaurant/17565"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 17553,
+        "restaurant_name": "燒鳥串道",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/17553"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15229,
+        "restaurant_name": "饗食天堂-台北京站店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15229"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14113,
+        "restaurant_name": "北澤壽喜燒-台中公益店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14113"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14111,
+        "restaurant_name": "北澤壽喜燒-台中大里店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14111"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 1747,
+        "restaurant_name": "漢來海港-台中廣三SOGO",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/1747"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14015,
+        "restaurant_name": "一頭牛日式燒肉-台中公益店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14015"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15830,
+        "restaurant_name": "爵旋轉串燒-台中",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15830"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 9646,
+        "restaurant_name": "原燒-台中市政北店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/9646"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14212,
+        "restaurant_name": "紅花鐵板燒-台中公益旗艦",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14212"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 9805,
+        "restaurant_name": "漢來海港-台北敦化店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/9805"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 166,
+        "restaurant_name": "漢來海港-台北漢來店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/166"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15228,
+        "restaurant_name": "饗食天堂-台北信義店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15228"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15226,
+        "restaurant_name": "饗食天堂-台北大直店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15226"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15230,
+        "restaurant_name": "饗食天堂-新北板橋店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15230"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15233,
+        "restaurant_name": "饗食天堂-新竹大遠百店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15233"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 42,
+        "restaurant_name": "十二廚-台北喜來登",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/42"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 13228,
+        "restaurant_name": "彩匯-台北美福大飯店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/13228"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 1098,
+        "restaurant_name": "欣葉日本料理-館前店",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/1098"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 13190,
+        "restaurant_name": "夠夠肉-台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/13190"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 13797,
+        "restaurant_name": "老乾杯-台北信義新天地A9",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/13797"
       }
     ]
   },
