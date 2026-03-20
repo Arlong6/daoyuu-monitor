@@ -214,6 +214,213 @@
         "people": 4,
         "target_times": [],
         "url": "https://tw.eztable.com/restaurant/14212"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 17607,
+        "restaurant_name": "北澤壽喜燒-台中崇德店",
+        "region": "台中",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/17607"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 17653,
+        "restaurant_name": "牛角日本燒肉-台北復興店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/17653"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14037,
+        "restaurant_name": "まるみち丸道燒肉-台北店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14037"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 1819,
+        "restaurant_name": "小蒙牛頂級麻辣養生鍋-站前店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/1819"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14217,
+        "restaurant_name": "小蒙牛頂級麻辣養生鍋-西門店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14217"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 16966,
+        "restaurant_name": "小蒙牛頂級麻辣養生鍋-中壢店",
+        "region": "桃園",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/16966"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14598,
+        "restaurant_name": "金鍋盃精緻小火鍋-新北中和店",
+        "region": "新北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14598"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14295,
+        "restaurant_name": "老四川-台北長安店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14295"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14296,
+        "restaurant_name": "老四川-台北南京店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14296"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14550,
+        "restaurant_name": "燒肉HATSU-中山店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14550"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15654,
+        "restaurant_name": "燒肉HATSU-大直店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15654"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14225,
+        "restaurant_name": "吉兆割烹壽司",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14225"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 17374,
+        "restaurant_name": "胖肚肚燒肉-中山店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/17374"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15328,
+        "restaurant_name": "喜樂壽司",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15328"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 13876,
+        "restaurant_name": "饗樂Shabu精緻鍋品-民生社區",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/13876"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15702,
+        "restaurant_name": "Meal Room Shabu米釉贅沢鍋物",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15702"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 17255,
+        "restaurant_name": "小福利火鍋會所-新北中和環球店",
+        "region": "新北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/17255"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 15710,
+        "restaurant_name": "大戈壁蒙古烤肉",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/15710"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14850,
+        "restaurant_name": "上官木桶鍋-萬華旗艦店",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14850"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 16060,
+        "restaurant_name": "牧軒Shabu",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/16060"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14663,
+        "restaurant_name": "但馬家涮涮鍋-台北文華東方",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14663"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 14748,
+        "restaurant_name": "婧饌鍋物",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/14748"
+      },
+      {
+        "enabled": true,
+        "restaurant_id": 13752,
+        "restaurant_name": "欣葉呷哺呷哺",
+        "region": "台北",
+        "people": 4,
+        "target_times": [],
+        "url": "https://tw.eztable.com/restaurant/13752"
       }
     ]
   },
