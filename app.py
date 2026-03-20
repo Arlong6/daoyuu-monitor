@@ -354,6 +354,7 @@ async def get_restaurants():
                 'id': r['restaurant_id'],
                 'url': r['url'],
                 'people': r.get('people', 2),
+                'region': r.get('region', ''),
             })
     return restaurants
 

@@ -209,6 +209,20 @@
       border-top: 1px solid var(--border);
     }
 
+    /* ── Region tabs ── */
+    .tabs {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .tab {
+      padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500;
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
+      cursor: pointer; transition: all 0.18s; font-family: inherit;
+    }
+    .tab:hover { color: var(--text); border-color: #555; }
+    .tab.active {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+
     /* ── Skeleton ── */
     .skeleton {
       background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
@@ -264,6 +278,8 @@
     <span class="section-title">即時空位狀態</span>
     <span class="live-badge"><span class="live-dot"></span> LIVE</span>
   </div>
+
+  <div class="tabs" id="region-tabs"></div>
 
   <div class="search-wrap">
     <span class="search-icon">🔍</span>
@@ -326,6 +342,8 @@
 
 <script>
   let allCards = []
+  let regionMap = {}   // name -> region
+  let activeRegion = '全部'
 
   function formatTime(iso) {
     if (!iso) return ''
@@ -336,15 +354,16 @@
 
   function buildCard(r, index) {
     const has = r.has_availability
+    const region = regionMap[r.name] || ''
     const detail = has
       ? `最近可訂：${r.next_date}（共 ${r.total_dates} 天）`
       : '目前無空位'
     const checked = r.last_checked ? `更新 ${formatTime(r.last_checked)}` : '尚未掃描'
 
     return `
-      <div class="card ${has ? 'has-slot' : ''}" data-name="${r.name}" style="animation-delay:${index * 0.04}s">
+      <div class="card ${has ? 'has-slot' : ''}" data-name="${r.name}" data-region="${region}" style="animation-delay:${index * 0.04}s">
         <div class="card-body">
-          <div class="card-name">${r.name}</div>
+          <div class="card-name">${r.name}${region ? ` <span style="font-size:0.68rem;font-weight:400;color:var(--muted);margin-left:4px">${region}</span>` : ''}</div>
           <div class="card-detail">${detail}</div>
         </div>
         <div class="card-right">
@@ -361,16 +380,26 @@
     const cards = container.querySelectorAll('.card')
     let shown = 0
     cards.forEach(c => {
-      const match = c.dataset.name.toLowerCase().includes(q)
-      c.style.display = match ? '' : 'none'
-      if (match) shown++
+      const nameMatch = c.dataset.name.toLowerCase().includes(q)
+      const regionMatch = activeRegion === '全部' || c.dataset.region === activeRegion
+      const visible = nameMatch && regionMatch
+      c.style.display = visible ? '' : 'none'
+      if (visible) shown++
     })
     const empty = document.getElementById('empty-search')
     if (empty) empty.remove()
-    if (shown === 0 && q) {
+    if (shown === 0) {
       container.insertAdjacentHTML('beforeend',
-        `<div id="empty-search" class="empty-state">找不到「${q}」相關餐廳</div>`)
+        `<div id="empty-search" class="empty-state">找不到相關餐廳</div>`)
     }
+  }
+
+  function setRegion(region) {
+    activeRegion = region
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.region === region)
+    })
+    filterCards()
   }
 
   async function loadStatus() {
@@ -401,6 +430,25 @@
   async function loadRestaurants() {
     const res = await fetch('/api/restaurants')
     const list = await res.json()
+
+    // build region map
+    regionMap = {}
+    const regions = new Set()
+    list.forEach(r => {
+      regionMap[r.name] = r.region || ''
+      if (r.region) regions.add(r.region)
+    })
+
+    // build tabs
+    const regionOrder = ['台北', '新北', '桃園', '新竹', '台中']
+    const sorted = regionOrder.filter(r => regions.has(r))
+      .concat([...regions].filter(r => !regionOrder.includes(r)))
+    const tabsEl = document.getElementById('region-tabs')
+    tabsEl.innerHTML = ['全部', ...sorted].map(r =>
+      `<button class="tab ${r === '全部' ? 'active' : ''}" data-region="${r}" onclick="setRegion('${r}')">${r}</button>`
+    ).join('')
+
+    // dropdown
     const select = document.getElementById('restaurant-select')
     select.innerHTML = list.map(r =>
       `<option value="${r.id}" data-name="${r.name}" data-url="${r.url}" data-people="${r.people}">${r.name}</option>`
