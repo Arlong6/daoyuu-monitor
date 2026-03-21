@@ -2,7 +2,7 @@ name: inline.app 訂位監控
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # 每 6 小時
+    - cron: '0 * * * *'  # 每小時
   workflow_dispatch:        # 手動觸發
 
 jobs:
