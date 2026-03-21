@@ -8,11 +8,14 @@ import asyncio
 import json
 import os
 import sys
+import re
 import smtplib
 import requests
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+TZ_TAIPEI = timezone(timedelta(hours=8))
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'monitor_state.json')
@@ -77,59 +80,54 @@ def send_telegram(config, text):
 
 async def check_restaurant(page, name, url, pax):
     """
-    載入 inline.app 訂位頁面，回傳可用日期列表。
-    回傳 None 表示頁面載入失敗或被 PX 擋住。
+    載入訂位頁面，回傳可用時段列表（格式 "YYYY-MM-DD HH:MM"）。
+    支援 inline.app/booking 與 Google Maps Reserve 兩種 URL。
+    回傳 None 表示頁面載入失敗。
     """
-    print(f"\n  🍽️  {name}")
+    print(f"\n  {name}")
     print(f"     URL: {url}")
 
     try:
-        # 前往訂位頁面
         await page.goto(url, wait_until='domcontentloaded', timeout=30000)
-
-        # 等待人數選擇器出現（代表頁面已 render）
-        # inline 的人數選擇通常是 select 或 button
-        try:
-            await page.wait_for_selector(
-                '[data-testid="pax-selector"], select[name="pax"], .pax-selector, '
-                'button[aria-label*="人"], .booking-pax',
-                timeout=15000
-            )
-        except Exception:
-            # 退而求其次：等主內容出現
-            try:
-                await page.wait_for_selector(
-                    '.booking-calendar, .date-picker, [data-testid="calendar"]',
-                    timeout=15000
-                )
-            except Exception:
-                pass
-
-        # 等頁面穩定
         await asyncio.sleep(3)
 
-        # 檢查是否被 PX 擋住
         content = await page.content()
+
+        # Google Maps Reserve 路線：直接從頁面 HTML 解析 start_sec
+        if 'maps.google.com/maps/reserve' in url or 'google.com/maps/reserve' in url:
+            slots = _parse_google_reserve_slots(content)
+            print(f"     找到 {len(slots)} 個可用時段: {slots[:5]}")
+            return slots
+
+        # inline.app 路線
         if 'px.js' in content and len(content) < 10000:
-            print(f"     ❌ 被 PX 擋住（頁面 {len(content)} bytes）")
+            print(f"     被 PX 擋住（頁面 {len(content)} bytes）")
             return None
 
         title = await page.title()
         print(f"     頁面標題: {title}")
 
-        # 如果需要選人數，先選擇
         if pax:
             await _select_pax(page, pax)
             await asyncio.sleep(2)
 
-        # 讀取可用日期
         available_dates = await _get_available_dates(page)
         print(f"     找到 {len(available_dates)} 個可用日期: {available_dates[:5]}")
         return available_dates
 
     except Exception as e:
-        print(f"     ❌ 錯誤: {e}")
+        print(f"     錯誤: {e}")
         return None
+
+
+def _parse_google_reserve_slots(html):
+    """從 Google Reserve 頁面 HTML 解析可用時段，回傳 'YYYY-MM-DD HH:MM' 列表"""
+    raw = re.findall(r'start_sec(?:\\u003d|=)(\d{9,11})', html)
+    slots = []
+    for t in sorted(set(raw)):
+        dt = datetime.fromtimestamp(int(t), tz=TZ_TAIPEI)
+        slots.append(dt.strftime('%Y-%m-%d %H:%M'))
+    return slots
 
 
 async def _select_pax(page, pax):
