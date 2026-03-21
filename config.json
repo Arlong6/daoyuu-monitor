@@ -463,7 +463,7 @@
   },
 
   "inline": {
-    "enabled": false,
+    "enabled": true,
     "restaurants": [
       {
         "name": "島語-桃園台茂店",
