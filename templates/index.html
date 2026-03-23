@@ -243,6 +243,22 @@
       background: var(--accent); border-color: var(--accent); color: #fff;
     }
 
+    /* ── Collapse ── */
+    .collapse-btn {
+      font-size: 0.75rem; color: var(--muted); background: none;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 4px 10px; cursor: pointer; font-family: inherit;
+      transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+    }
+    .collapse-btn:hover { color: var(--text); border-color: #555; }
+    .collapse-arrow { display: inline-block; transition: transform 0.25s; }
+    .list-wrap {
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease;
+      max-height: 9999px; opacity: 1;
+    }
+    .list-wrap.collapsed { max-height: 0; opacity: 0; pointer-events: none; }
+
     /* ── Skeleton ── */
     .skeleton {
       background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
@@ -296,23 +312,31 @@
   <!-- Status -->
   <div class="section-header">
     <span class="section-title">即時空位狀態</span>
-    <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+      <button class="collapse-btn" id="collapse-btn" onclick="toggleList()">
+        <span class="collapse-arrow" id="collapse-arrow">▲</span>
+        <span id="collapse-label">收起</span>
+      </button>
+    </div>
   </div>
 
-  <div class="tabs" id="region-tabs"></div>
+  <div class="list-wrap" id="list-wrap">
+    <div class="tabs" id="region-tabs"></div>
 
-  <div class="search-wrap">
-    <span class="search-icon">🔍</span>
-    <input id="search-input" type="text" placeholder="搜尋餐廳名稱…" oninput="filterCards()">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="search-input" type="text" placeholder="搜尋餐廳名稱…" oninput="filterCards()">
+    </div>
+
+    <div id="cards" class="cards-grid">
+      <div class="skeleton"></div>
+      <div class="skeleton" style="animation-delay:0.1s"></div>
+      <div class="skeleton" style="animation-delay:0.2s"></div>
+    </div>
+
+    <p id="last-updated" style="font-size:0.7rem;color:var(--muted);text-align:right;margin-top:10px;"></p>
   </div>
-
-  <div id="cards" class="cards-grid">
-    <div class="skeleton"></div>
-    <div class="skeleton" style="animation-delay:0.1s"></div>
-    <div class="skeleton" style="animation-delay:0.2s"></div>
-  </div>
-
-  <p id="last-updated" style="font-size:0.7rem;color:var(--muted);text-align:right;margin-top:10px;"></p>
 
   <!-- Subscribe -->
   <div class="form-card">
@@ -600,6 +624,15 @@
     el.textContent = text
     el.className = `form-msg ${type}`
     el.style.display = 'block'
+  }
+
+  function toggleList() {
+    const wrap = document.getElementById('list-wrap')
+    const arrow = document.getElementById('collapse-arrow')
+    const label = document.getElementById('collapse-label')
+    const collapsed = wrap.classList.toggle('collapsed')
+    arrow.style.transform = collapsed ? 'rotate(180deg)' : ''
+    label.textContent = collapsed ? '展開' : '收起'
   }
 
   // 先載入地區資料，再渲染卡片（確保 regionMap 已填好）
