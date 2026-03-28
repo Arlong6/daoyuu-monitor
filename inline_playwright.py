@@ -80,9 +80,8 @@ def send_telegram(config, text):
 
 async def check_restaurant(page, name, url, pax):
     """
-    載入訂位頁面，回傳可用時段列表（格式 "YYYY-MM-DD HH:MM"）。
-    支援 inline.app/booking 與 Google Maps Reserve 兩種 URL。
-    回傳 None 表示頁面載入失敗。
+    載入訂位頁面，回傳可用日期列表。
+    支援 inline.app、Google Maps Reserve、Catch Table 三種 URL。
     """
     print(f"\n  {name}")
     print(f"     URL: {url}")
@@ -93,13 +92,19 @@ async def check_restaurant(page, name, url, pax):
 
         content = await page.content()
 
-        # Google Maps Reserve 路線：直接從頁面 HTML 解析 start_sec
-        if 'maps.google.com/maps/reserve' in url or 'google.com/maps/reserve' in url:
+        # Google Maps Reserve
+        if 'google.com/maps/reserve' in url:
             slots = _parse_google_reserve_slots(content)
             print(f"     找到 {len(slots)} 個可用時段: {slots[:5]}")
             return slots
 
-        # inline.app 路線
+        # Catch Table
+        if 'catchtable.net' in url or 'catchtable.co.kr' in url:
+            dates = await _check_catchtable(page, pax)
+            print(f"     找到 {len(dates)} 個可用日期: {dates[:5]}")
+            return dates
+
+        # inline.app
         if 'px.js' in content and len(content) < 10000:
             print(f"     被 PX 擋住（頁面 {len(content)} bytes）")
             return None
@@ -118,6 +123,43 @@ async def check_restaurant(page, name, url, pax):
     except Exception as e:
         print(f"     錯誤: {e}")
         return None
+
+
+async def _check_catchtable(page, pax):
+    """Catch Table 日曆爬取：點 Reserve → 直接讀取 DOM 中所有可用日期"""
+    available = []
+    try:
+        # 點 Reserve 按鈕
+        reserve_btn = await page.query_selector('button:has-text("Reserve")')
+        if not reserve_btn:
+            return available
+        await reserve_btn.click()
+        await asyncio.sleep(3)
+
+        # 日曆 DOM 一次全部載入，直接讀取所有年份的日期元素
+        days = await page.query_selector_all('[aria-label*="2026"], [aria-label*="2027"]')
+        for day in days:
+            label = await day.get_attribute('aria-label')
+            if not label:
+                continue
+            disabled = await day.get_attribute('aria-disabled')
+            cls = await day.get_attribute('class') or ''
+            if disabled == 'true' or 'disabled' in cls.lower() or 'inactive' in cls.lower():
+                continue
+            # 解析 "Tuesday, Apr 1, 2026" 格式
+            for fmt in ['%A, %b %d, %Y', '%A, %B %d, %Y']:
+                try:
+                    from datetime import datetime as dt2
+                    d = dt2.strptime(label.strip(), fmt)
+                    available.append(d.strftime('%Y-%m-%d'))
+                    break
+                except Exception:
+                    pass
+
+    except Exception as e:
+        print(f"     Catch Table 錯誤: {e}")
+
+    return sorted(list(set(available)))
 
 
 def _parse_google_reserve_slots(html):

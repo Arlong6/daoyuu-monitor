@@ -47,9 +47,93 @@
         "url": "https://inline.app/booking/-NeqTSgDQOAYi30lg4a7:inline-live-3/-NeqTStJZDIBQHEMSDI8",
         "pax": 4,
         "enabled": true
+      },
+      {
+        "name": "Mingles (밍글스)",
+        "url": "https://www.catchtable.net/shop/mingles",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Via Toledo (비아 톨레도) — S1 Winner",
+        "url": "https://www.catchtable.net/shop/viatoledo",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Soigné (스와니예) — S2 Michelin 2★",
+        "url": "https://www.catchtable.net/shop/soigneseoul",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "trid (트리드)",
+        "url": "https://www.catchtable.net/shop/trid",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "EVETT (에빗) — Michelin 1★",
+        "url": "https://www.catchtable.net/shop/evett",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Kojacha (코자차) — S2 Michelin 1★",
+        "url": "https://www.catchtable.net/shop/kojacha",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "L'Amant Secret (라망시크레) — S2 Michelin 1★",
+        "url": "https://www.catchtable.net/shop/lamantsecret",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Yun Seoul (윤서울) — Michelin 1★",
+        "url": "https://www.catchtable.net/shop/yunseoul",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Soul Dining (소울) — S2 Michelin 1★",
+        "url": "https://www.catchtable.net/shop/souldining",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "CHOI. (최.) — S1 White Spoon",
+        "url": "https://www.catchtable.net/shop/choidot",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Bornyon (본연)",
+        "url": "https://www.catchtable.net/shop/bornyon",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Jungsik (정식)",
+        "url": "https://www.catchtable.net/shop/jungsik",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "Onjium (온지음)",
+        "url": "https://www.catchtable.net/shop/onjiumrestaurant",
+        "pax": 2,
+        "enabled": true
+      },
+      {
+        "name": "KANG MINCHUL (강민철)",
+        "url": "https://www.catchtable.net/shop/KANGMINCHUL",
+        "pax": 2,
+        "enabled": true
       }
     ],
-    "check_interval_minutes": 360,
+    "check_interval_minutes": 60,
     "headless": true
   }
 }
