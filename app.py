@@ -505,6 +505,49 @@ async def unsubscribe(token: str):
     return "<h2 style='font-family:sans-serif;padding:2rem'>✅ 已取消訂閱，不會再收到通知。</h2>"
 
 
+STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'monitor_state.json')
+
+
+@app.get("/inline", response_class=HTMLResponse)
+async def inline_page():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates', 'inline.html')
+    with open(path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+
+@app.get("/api/inline-status")
+async def inline_status():
+    """讀取 monitor_state.json 回傳 inline/Catch Table 監控結果"""
+    try:
+        with open(STATE_PATH, 'r', encoding='utf-8') as f:
+            state = json.load(f)
+    except Exception:
+        return {"restaurants": [], "last_checked": None}
+
+    config = load_config()
+    inline_cfg = config.get('inline', {})
+    restaurant_cfgs = {r['name']: r for r in inline_cfg.get('restaurants', [])}
+
+    available = state.get('inline_available', {})
+    last_checked = state.get('inline_last_checked')
+
+    result = []
+    for r_cfg in inline_cfg.get('restaurants', []):
+        if not r_cfg.get('enabled', True):
+            continue
+        name = r_cfg['name']
+        dates = available.get(name, [])
+        result.append({
+            'name': name,
+            'url': r_cfg['url'],
+            'dates': dates,
+            'has_availability': len(dates) > 0,
+            'total': len(dates),
+        })
+
+    return {"restaurants": result, "last_checked": last_checked}
+
+
 @app.get("/api/stats")
 async def stats():
     conn = get_db()

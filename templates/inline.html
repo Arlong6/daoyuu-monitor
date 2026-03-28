@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>韓國餐廳監控 — 訂位雷達</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f11;
+      --surface: #1a1a1f;
+      --surface2: #232329;
+      --border: #2e2e38;
+      --text: #f0f0f3;
+      --muted: #8b8b9a;
+      --green: #22c55e;
+      --green-dim: #16532d;
+      --accent: #7c6af7;
+    }
+
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,15,17,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-inner {
+      max-width: 780px; margin: auto; padding: 0 20px;
+      height: 60px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--green); box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+    .logo-text { font-size: 1rem; font-weight: 700; }
+    .nav-link {
+      font-size: 0.8rem; color: var(--muted); text-decoration: none;
+      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .nav-link:hover { color: var(--text); border-color: #555; }
+
+    main { max-width: 780px; margin: auto; padding: 40px 20px 80px; }
+
+    .page-header { margin-bottom: 32px; }
+    .page-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
+    .page-sub { font-size: 0.82rem; color: var(--muted); margin-top: 6px; }
+
+    .meta-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-label { font-size: 0.75rem; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .live-badge { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--green); }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 1.8s infinite; }
+
+    .cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px 20px;
+      animation: fadeIn 0.3s ease both;
+      transition: border-color 0.2s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .card.has-slot { border-color: var(--green-dim); background: #0d1f14; }
+    .card:hover { border-color: #444; }
+    .card.has-slot:hover { border-color: var(--green); }
+
+    .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .card-name { font-size: 0.92rem; font-weight: 600; }
+    .card-source { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+    .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+
+    .badge {
+      font-size: 0.7rem; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-green { background: var(--green-dim); color: var(--green); }
+    .badge-gray  { background: var(--surface2); color: var(--muted); }
+
+    .card-link { font-size: 0.72rem; color: var(--accent); text-decoration: none; }
+    .card-link:hover { text-decoration: underline; }
+
+    .dates-wrap { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .date-chip {
+      font-size: 0.72rem; padding: 3px 10px; border-radius: 20px;
+      background: #0f2b1a; color: #4ade80; border: 1px solid var(--green-dim);
+    }
+    .dates-more { font-size: 0.72rem; color: var(--muted); align-self: center; }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite;
+      border-radius: 12px; height: 72px;
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .last-updated { font-size: 0.7rem; color: var(--muted); text-align: right; margin-top: 12px; }
+
+    footer {
+      text-align: center; padding: 32px 20px;
+      color: var(--muted); font-size: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <div class="logo-text">訂位雷達</div>
+    </div>
+    <a href="/" class="nav-link">← 台灣餐廳</a>
+  </div>
+</header>
+
+<main>
+  <div class="page-header">
+    <div class="page-title">韓國熱門餐廳監控</div>
+    <div class="page-sub">黑白大廚 × 米其林 — 每小時透過 Catch Table 自動掃描</div>
+  </div>
+
+  <div class="meta-row">
+    <span class="section-label">即時空位狀態</span>
+    <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+  </div>
+
+  <div class="cards" id="cards">
+    <div class="skeleton"></div>
+    <div class="skeleton" style="animation-delay:.08s"></div>
+    <div class="skeleton" style="animation-delay:.16s"></div>
+  </div>
+
+  <div class="last-updated" id="last-updated"></div>
+</main>
+
+<footer>訂位雷達 · 韓國餐廳資料來源 Catch Table · 每小時自動掃描</footer>
+
+<script>
+  function formatTime(iso) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+  }
+
+  function sourceLabel(url) {
+    if (url.includes('catchtable')) return 'Catch Table'
+    if (url.includes('inline.app')) return 'inline.app'
+    if (url.includes('google.com')) return 'Google Reserve'
+    return ''
+  }
+
+  function buildCard(r, i) {
+    const has = r.has_availability
+    const src = sourceLabel(r.url)
+    const shown = r.dates.slice(0, 6)
+    const extra = r.dates.length - shown.length
+
+    const chips = shown.map(d => `<span class="date-chip">${d}</span>`).join('')
+    const more = extra > 0 ? `<span class="dates-more">+${extra} 天</span>` : ''
+
+    return `
+      <div class="card ${has ? 'has-slot' : ''}" style="animation-delay:${i * 0.05}s">
+        <div class="card-top">
+          <div>
+            <div class="card-name">${r.name}</div>
+            <div class="card-source">${src}</div>
+          </div>
+          <div class="card-right">
+            <span class="badge ${has ? 'badge-green' : 'badge-gray'}">${has ? '✦ 有空位' : '無空位'}</span>
+            <a class="card-link" href="${r.url}" target="_blank">前往訂位 ↗</a>
+          </div>
+        </div>
+        ${has ? `<div class="dates-wrap">${chips}${more}</div>` : ''}
+      </div>`
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/api/inline-status')
+      const data = await res.json()
+
+      const sorted = [...data.restaurants].sort((a, b) => b.has_availability - a.has_availability)
+      document.getElementById('cards').innerHTML = sorted.length
+        ? sorted.map((r, i) => buildCard(r, i)).join('')
+        : '<div style="text-align:center;padding:40px;color:var(--muted)">尚無監控資料，請稍後再試</div>'
+
+      if (data.last_checked)
+        document.getElementById('last-updated').textContent = `資料更新於 ${formatTime(data.last_checked)}`
+    } catch {
+      document.getElementById('cards').innerHTML =
+        '<div style="text-align:center;padding:40px;color:var(--muted)">無法載入，請重新整理</div>'
+    }
+  }
+
+  load()
+  setInterval(load, 5 * 60 * 1000)
+</script>
+</body>
+</html>
