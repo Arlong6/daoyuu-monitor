@@ -3,153 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>管理訂閱 — 訂位雷達</title>
+  <title>管理訂閱｜訂位雷達</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0f0f11;
-      --surface: #1a1a1f;
-      --surface2: #232329;
-      --border: #2e2e38;
-      --text: #f0f0f3;
-      --muted: #8b8b9a;
-      --green: #22c55e;
-      --green-dim: #16532d;
-      --red: #ef4444;
-      --red-dim: #3b1111;
-      --accent: #7c6af7;
-    }
-
-    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-
-    header {
-      border-bottom: 1px solid var(--border);
-      background: rgba(15,15,17,0.85);
-      backdrop-filter: blur(12px);
-      position: sticky; top: 0; z-index: 50;
-    }
-    .header-inner {
-      max-width: 680px; margin: auto; padding: 0 20px;
-      height: 60px; display: flex; align-items: center; justify-content: space-between;
-    }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--green); box-shadow: 0 0 8px var(--green);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
-    }
-    .logo-text { font-size: 1rem; font-weight: 700; }
-    .nav-link {
-      font-size: 0.8rem; color: var(--muted); text-decoration: none;
-      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
-      transition: all 0.2s;
-    }
-    .nav-link:hover { color: var(--text); border-color: #555; }
-
-    main { max-width: 680px; margin: auto; padding: 40px 20px 80px; }
-
-    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.5px; }
-    .page-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 32px; }
-
-    /* Search card */
-    .search-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; padding: 24px; margin-bottom: 28px;
-    }
-    .search-card label { font-size: 0.78rem; color: var(--muted); font-weight: 500; display: block; margin-bottom: 8px; }
-    .search-row { display: flex; gap: 10px; }
-    .form-control {
-      flex: 1; padding: 10px 14px;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-size: 0.88rem;
-      outline: none; transition: border-color 0.2s; font-family: inherit;
-    }
-    .form-control::placeholder { color: #555; }
-    .form-control:focus { border-color: var(--accent); }
-    .search-btn {
-      padding: 10px 20px; background: var(--accent); color: #fff;
-      border: none; border-radius: 10px; font-size: 0.88rem; font-weight: 600;
-      cursor: pointer; transition: opacity 0.2s; white-space: nowrap; font-family: inherit;
-    }
-    .search-btn:hover { opacity: 0.88; }
-
-    /* Sub cards */
-    .subs-list { display: flex; flex-direction: column; gap: 10px; }
-    .sub-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 16px 18px;
-      display: flex; align-items: center; gap: 14px;
-      animation: fadeIn 0.3s ease both;
-      transition: border-color 0.2s;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .sub-card:hover { border-color: #444; }
-    .sub-body { flex: 1; min-width: 0; }
-    .sub-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sub-meta { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
-    .sub-link { font-size: 0.72rem; color: var(--accent); text-decoration: none; }
-    .sub-link:hover { text-decoration: underline; }
-    .cancel-btn {
-      padding: 6px 14px; border-radius: 8px;
-      border: 1px solid var(--red-dim); background: transparent;
-      color: var(--red); font-size: 0.78rem; font-weight: 500;
-      cursor: pointer; transition: all 0.2s; font-family: inherit; flex-shrink: 0;
-    }
-    .cancel-btn:hover { background: var(--red-dim); }
-
-    .state-msg {
-      text-align: center; padding: 48px 20px;
-      color: var(--muted); font-size: 0.85rem;
-    }
-    .state-msg .emoji { font-size: 2rem; display: block; margin-bottom: 10px; }
-
-    footer {
-      text-align: center; padding: 32px 20px;
-      color: var(--muted); font-size: 0.75rem;
-      border-top: 1px solid var(--border);
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<header>
-  <div class="header-inner">
-    <div class="logo">
-      <div class="logo-dot"></div>
-      <div class="logo-text">訂位雷達</div>
-    </div>
-    <a href="/" class="nav-link">← 回首頁</a>
+<header class="site">
+  <div class="site-inner">
+    <a class="wordmark" href="/">訂位雷達</a>
+    <nav class="site-nav" aria-label="頁面">
+      <a href="/">台灣餐廳</a>
+      <a href="/inline">韓國餐廳</a>
+    </nav>
   </div>
 </header>
 
 <main>
-  <div class="page-title">管理訂閱</div>
-  <div class="page-sub">輸入 Email 查詢你目前的訂閱，可以一鍵取消</div>
+  <section class="lede" aria-labelledby="h1">
+    <h1 id="h1">管理訂閱</h1>
+    <p>輸入訂閱時用的 Email，就能看到並取消你的通知。</p>
+  </section>
 
-  <div class="search-card">
-    <label>你的 Email</label>
-    <div class="search-row">
-      <input id="email-input" type="email" class="form-control"
-        placeholder="your@email.com"
-        onkeydown="if(event.key==='Enter') loadSubs()">
-      <button class="search-btn" onclick="loadSubs()">查詢</button>
+  <section class="panel" style="margin-top:28px" aria-label="查詢訂閱">
+    <div class="field">
+      <label for="email-input">Email</label>
+      <div class="inline-row">
+        <input id="email-input" type="email" class="input"
+          placeholder="you@example.com" autocomplete="email"
+          onkeydown="if(event.key==='Enter') loadSubs()">
+        <button class="btn btn-secondary" onclick="loadSubs()">查詢</button>
+      </div>
     </div>
-  </div>
+    <div class="msg" id="form-msg" hidden role="status"></div>
+  </section>
 
-  <div id="result"></div>
+  <div id="result" aria-live="polite" style="margin-top:28px"></div>
 </main>
 
-<footer>訂位雷達 · 若有問題，取消連結也在確認信裡</footer>
+<footer class="site">訂位雷達。確認信裡也有每家餐廳的取消連結。</footer>
 
 <script>
   function formatDate(iso) {
@@ -158,12 +52,24 @@
     return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`
   }
 
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  }
+
+  function showMsg(text, type) {
+    const el = document.getElementById('form-msg')
+    el.textContent = text
+    el.className = `msg ${type}`
+    el.hidden = false
+  }
+
   async function loadSubs() {
     const email = document.getElementById('email-input').value.trim()
-    if (!email.includes('@')) { alert('請輸入正確的 Email'); return }
+    if (!email.includes('@')) { showMsg('Email 格式不對，請檢查後再查詢。', 'err'); return }
+    document.getElementById('form-msg').hidden = true
 
     const result = document.getElementById('result')
-    result.innerHTML = '<div class="state-msg"><span class="emoji">⏳</span>查詢中…</div>'
+    result.innerHTML = '<div class="list"><div class="skeleton"></div><div class="skeleton"></div></div>'
 
     try {
       const res = await fetch(`/api/my-subscriptions?email=${encodeURIComponent(email)}`)
@@ -171,56 +77,50 @@
 
       if (!Array.isArray(subs) || subs.length === 0) {
         result.innerHTML = `
-          <div class="state-msg">
-            <span class="emoji">🔍</span>
-            找不到 <strong>${email}</strong> 的訂閱記錄
+          <div class="state">
+            <strong>${esc(email)}</strong> 目前沒有訂閱。<br>
+            回<a href="/">首頁</a>可以訂閱餐廳的空位通知。
           </div>`
         return
       }
 
-      result.innerHTML = `<div class="subs-list">${subs.map((s, i) => `
-        <div class="sub-card" id="sub-${s.token}" style="animation-delay:${i*0.06}s">
-            <div class="sub-body">
-            <div class="sub-name">${s.restaurant_name}</div>
-            <div class="sub-meta">${s.people} 人 · 訂閱於 ${formatDate(s.created_at)}</div>
-            <a class="sub-link" href="${s.restaurant_url}" target="_blank">查看餐廳 ↗</a>
+      result.innerHTML = `<div class="list">${subs.map(s => `
+        <div class="row" id="sub-${esc(s.token)}">
+          <div class="row-main">
+            <div class="row-name">${esc(s.restaurant_name)}</div>
+            <div class="row-detail">${s.people} 人，訂閱於 ${formatDate(s.created_at)}</div>
           </div>
-          <button class="cancel-btn" onclick="cancelSub('${s.token}')">取消訂閱</button>
+          <div class="row-side">
+            <button class="btn btn-danger" onclick="cancelSub('${esc(s.token)}', '${esc(s.restaurant_name)}')">取消訂閱</button>
+            <a href="${esc(s.restaurant_url)}" target="_blank" rel="noopener">查看餐廳</a>
+          </div>
         </div>`).join('')}</div>`
 
     } catch {
-      result.innerHTML = '<div class="state-msg"><span class="emoji">⚠️</span>查詢失敗，請重試</div>'
+      result.innerHTML = '<div class="state">讀不到訂閱資料。重新整理頁面再試一次。</div>'
     }
   }
 
-  async function cancelSub(token) {
-    if (!confirm('確定要取消此訂閱？')) return
+  async function cancelSub(token, name) {
+    if (!confirm(`取消「${name}」的空位通知？`)) return
     const el = document.getElementById(`sub-${token}`)
     if (!el) return
 
-    el.style.opacity = '0.5'
-    el.style.pointerEvents = 'none'
+    el.querySelector('button').disabled = true
 
     try {
       await fetch(`/unsubscribe/${token}`)
     } catch {}
 
-    el.style.transition = 'all 0.4s'
-    el.style.opacity = '0'
-    el.style.maxHeight = el.offsetHeight + 'px'
-    requestAnimationFrame(() => {
-      el.style.maxHeight = '0'
-      el.style.padding = '0'
-      el.style.marginBottom = '0'
-    })
+    el.classList.add('leaving')
     setTimeout(() => {
       el.remove()
-      const list = document.querySelector('.subs-list')
+      const list = document.querySelector('#result .list')
       if (list && !list.children.length) {
         document.getElementById('result').innerHTML =
-          '<div class="state-msg"><span class="emoji">✅</span>已取消所有訂閱</div>'
+          '<div class="state">已取消所有訂閱，不會再收到通知。</div>'
       }
-    }, 420)
+    }, 220)
   }
 
   // 如果 URL 帶 email，自動查詢

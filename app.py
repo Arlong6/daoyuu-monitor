@@ -17,6 +17,7 @@ from email.mime.text import MIMEText
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 
@@ -318,6 +319,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')), name="static")
 
 
 class SubscribeRequest(BaseModel):
@@ -501,8 +503,18 @@ async def unsubscribe(token: str):
     conn.close()
 
     if result.rowcount == 0:
-        return "<h2 style='font-family:sans-serif;padding:2rem'>找不到此訂閱，可能已取消過了。</h2>"
-    return "<h2 style='font-family:sans-serif;padding:2rem'>✅ 已取消訂閱，不會再收到通知。</h2>"
+        return _plain_page("找不到這筆訂閱", "可能已經取消過了。你可以在管理頁查看目前還有哪些訂閱。")
+    return _plain_page("已取消訂閱", "這家餐廳不會再通知你。要再訂閱的話，回首頁重新填一次就好。")
+
+
+def _plain_page(title: str, body: str) -> str:
+    return f"""<!DOCTYPE html>
+<html lang="zh-TW"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title}｜訂位雷達</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css"></head>
+<body><main class="plain"><h1>{title}</h1><p>{body}</p><a href="/manage">管理訂閱</a></main></body></html>"""
 
 
 STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'monitor_state.json')

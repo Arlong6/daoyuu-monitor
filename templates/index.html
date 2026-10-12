@@ -3,359 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>訂位雷達 — 熱門餐廳空位即時偵測</title>
+  <title>訂位雷達｜難訂餐廳空位通知</title>
+  <meta name="description" content="自動掃描 EZTABLE 熱門餐廳，有空位時用 Email 和 Telegram 通知你。">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0f0f11;
-      --surface: #1a1a1f;
-      --surface2: #232329;
-      --border: #2e2e38;
-      --text: #f0f0f3;
-      --muted: #8b8b9a;
-      --green: #22c55e;
-      --green-dim: #16532d;
-      --red-dim: #3b1111;
-      --amber: #f59e0b;
-      --accent: #7c6af7;
-      --accent-dim: #2d2857;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── Header ── */
-    header {
-      border-bottom: 1px solid var(--border);
-      background: rgba(15,15,17,0.85);
-      backdrop-filter: blur(12px);
-      position: sticky; top: 0; z-index: 50;
-    }
-    .header-inner {
-      max-width: 900px; margin: auto; padding: 0 20px;
-      height: 60px; display: flex; align-items: center; justify-content: space-between;
-    }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
-    }
-    .logo-text { font-size: 1rem; font-weight: 700; letter-spacing: -0.3px; }
-    .logo-sub { font-size: 0.7rem; color: var(--muted); margin-top: 1px; }
-    .nav-link {
-      font-size: 0.8rem; color: var(--muted); text-decoration: none;
-      padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
-      transition: all 0.2s;
-    }
-    .nav-link:hover { color: var(--text); border-color: #555; }
-
-    /* ── Main ── */
-    main { max-width: 900px; margin: auto; padding: 40px 20px 80px; }
-
-    /* ── Hero ── */
-    .hero { text-align: center; padding: 40px 0 48px; }
-    .hero h1 {
-      font-size: clamp(1.8rem, 5vw, 2.8rem);
-      font-weight: 700; letter-spacing: -1px; line-height: 1.15;
-      background: linear-gradient(135deg, #fff 30%, #aaa 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .hero p { color: var(--muted); margin-top: 12px; font-size: 0.95rem; line-height: 1.6; }
-    .hero-stats {
-      display: flex; justify-content: center; gap: 32px; margin-top: 28px;
-    }
-    .stat { text-align: center; }
-    .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--text); }
-    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-
-    /* ── Section title ── */
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .section-title { font-size: 0.8rem; font-weight: 600; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
-    .live-badge {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 0.72rem; color: var(--green);
-    }
-    .live-dot {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
-      animation: pulse 1.8s infinite;
-    }
-
-    /* ── Search ── */
-    .search-wrap { position: relative; margin-bottom: 16px; }
-    .search-icon {
-      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-      color: var(--muted); pointer-events: none; font-size: 0.9rem;
-    }
-    #search-input {
-      width: 100%; padding: 10px 14px 10px 40px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-size: 0.88rem;
-      outline: none; transition: border-color 0.2s;
-    }
-    #search-input::placeholder { color: var(--muted); }
-    #search-input:focus { border-color: var(--accent); }
-
-    /* ── Restaurant cards ── */
-    .cards-grid { display: flex; flex-direction: column; gap: 8px; }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 18px;
-      display: flex; align-items: center; gap: 14px;
-      transition: border-color 0.2s, transform 0.15s;
-      animation: fadeIn 0.35s ease both;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .card:hover { border-color: #444; transform: translateY(-1px); }
-    .card.has-slot { border-color: var(--green-dim); background: #0d1f14; }
-    .card.has-slot:hover { border-color: var(--green); }
-
-    .card-body { flex: 1; min-width: 0; }
-    .card-name { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-detail { font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
-    .card.has-slot .card-detail { color: #4ade80; }
-
-    .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-    .badge {
-      font-size: 0.7rem; font-weight: 600; padding: 3px 9px;
-      border-radius: 20px; white-space: nowrap;
-    }
-    .badge-green { background: var(--green-dim); color: var(--green); }
-    .badge-gray  { background: var(--surface2); color: var(--muted); }
-    .card-link {
-      font-size: 0.72rem; color: var(--accent); text-decoration: none;
-      opacity: 0.8; transition: opacity 0.15s;
-    }
-    .card-link:hover { opacity: 1; text-decoration: underline; }
-    .card-checked { font-size: 0.68rem; color: var(--muted); }
-
-    .empty-state {
-      text-align: center; padding: 40px; color: var(--muted); font-size: 0.85rem;
-    }
-
-    /* ── Custom restaurant lookup ── */
-    .lookup-toggle {
-      font-size: 0.78rem; color: var(--accent); background: none; border: none;
-      cursor: pointer; padding: 0; font-family: inherit; margin-bottom: 14px;
-      display: block;
-    }
-    .lookup-toggle:hover { text-decoration: underline; }
-    .lookup-box {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; padding: 14px; margin-bottom: 14px; display: none;
-    }
-    .lookup-box.open { display: block; }
-    .lookup-row { display: flex; gap: 8px; }
-    .lookup-result {
-      margin-top: 10px; font-size: 0.8rem; padding: 8px 12px;
-      border-radius: 8px; display: none;
-    }
-    .lookup-result.found { background: #0d1f14; color: #4ade80; border: 1px solid var(--green-dim); }
-    .lookup-result.error { background: var(--red-dim); color: #f87171; }
-
-    /* ── Subscribe form ── */
-    .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      margin-top: 40px;
-    }
-    .form-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
-    .form-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 24px; }
-
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
-
-    .form-group { margin-bottom: 14px; }
-    .form-group.full { grid-column: 1 / -1; }
-    label { display: block; font-size: 0.78rem; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
-    .form-control {
-      width: 100%; padding: 10px 14px;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 10px; color: var(--text); font-size: 0.88rem;
-      outline: none; transition: border-color 0.2s; font-family: inherit;
-    }
-    .form-control::placeholder { color: #555; }
-    .form-control:focus { border-color: var(--accent); }
-
-    .form-hint { font-size: 0.7rem; color: var(--muted); margin-top: 5px; }
-    .form-hint a { color: var(--accent); text-decoration: none; }
-    .form-hint a:hover { text-decoration: underline; }
-
-    .submit-btn {
-      width: 100%; padding: 12px;
-      background: var(--accent); color: #fff;
-      border: none; border-radius: 10px;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      margin-top: 8px;
-    }
-    .submit-btn:hover { opacity: 0.9; }
-    .submit-btn:active { transform: scale(0.99); }
-    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    .form-msg {
-      margin-top: 12px; font-size: 0.82rem; text-align: center;
-      padding: 10px; border-radius: 8px; display: none;
-    }
-    .form-msg.success { background: var(--green-dim); color: var(--green); }
-    .form-msg.error   { background: var(--red-dim); color: #f87171; }
-
-    /* ── Footer ── */
-    footer {
-      text-align: center; padding: 32px 20px;
-      color: var(--muted); font-size: 0.75rem;
-      border-top: 1px solid var(--border);
-    }
-
-    /* ── Region tabs ── */
-    .tabs {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
-    }
-    .tab {
-      padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500;
-      border: 1px solid var(--border); background: transparent; color: var(--muted);
-      cursor: pointer; transition: all 0.18s; font-family: inherit;
-    }
-    .tab:hover { color: var(--text); border-color: #555; }
-    .tab.active {
-      background: var(--accent); border-color: var(--accent); color: #fff;
-    }
-
-    /* ── Collapse ── */
-    .collapse-btn {
-      font-size: 0.75rem; color: var(--muted); background: none;
-      border: 1px solid var(--border); border-radius: 8px;
-      padding: 4px 10px; cursor: pointer; font-family: inherit;
-      transition: all 0.2s; display: flex; align-items: center; gap: 5px;
-    }
-    .collapse-btn:hover { color: var(--text); border-color: #555; }
-    .collapse-arrow { display: inline-block; transition: transform 0.25s; }
-    .list-wrap {
-      overflow: hidden;
-      transition: max-height 0.4s ease, opacity 0.3s ease;
-      max-height: 9999px; opacity: 1;
-    }
-    .list-wrap.collapsed { max-height: 0; opacity: 0; pointer-events: none; }
-
-    /* ── Skeleton ── */
-    .skeleton {
-      background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 8px; height: 60px;
-    }
-    @keyframes shimmer {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<header>
-  <div class="header-inner">
-    <div class="logo">
-      <div class="logo-dot"></div>
-      <div>
-        <div class="logo-text">訂位雷達</div>
-        <div class="logo-sub">每 30 分鐘自動掃描</div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <a href="/inline" class="nav-link">韓國餐廳</a>
-      <a href="/manage" class="nav-link">管理訂閱</a>
-    </div>
+<header class="site">
+  <div class="site-inner">
+    <a class="wordmark" href="/">訂位雷達</a>
+    <nav class="site-nav" aria-label="頁面">
+      <a href="/inline">韓國餐廳</a>
+      <a href="/manage">管理訂閱</a>
+    </nav>
   </div>
 </header>
 
 <main>
+  <section class="lede" aria-labelledby="h1">
+    <h1 id="h1">難訂的餐廳一開放訂位，你第一個知道。</h1>
+    <p>每 30 分鐘掃描一次 EZTABLE，看到空位就寄 Email 和 Telegram 給你。</p>
+    <p class="now" id="now" aria-live="polite">正在讀取空位狀態</p>
+  </section>
 
-  <!-- Hero -->
-  <div class="hero">
-    <h1>熱門餐廳有位了，<br>你第一個知道</h1>
-    <p>自動監控 EZTABLE 熱門難訂餐廳<br>有空位時立即寄信＋Telegram 通知</p>
-    <div class="hero-stats">
-      <div class="stat">
-        <div class="stat-num" id="stat-total">—</div>
-        <div class="stat-label">監控餐廳</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num" id="stat-avail">—</div>
-        <div class="stat-label">目前有位</div>
-      </div>
-      <div class="stat">
-        <div class="stat-num">30m</div>
-        <div class="stat-label">掃描間隔</div>
-      </div>
+  <div class="toolbar">
+    <div class="tabs" id="region-tabs" role="tablist" aria-label="地區"></div>
+    <div class="search">
+      <input id="search-input" type="search" placeholder="搜尋餐廳" aria-label="搜尋餐廳" oninput="filterCards()">
     </div>
+    <button class="ghost-btn" id="collapse-btn" aria-expanded="true" aria-controls="list-wrap" onclick="toggleList()">收起清單</button>
   </div>
 
-  <!-- Status -->
-  <div class="section-header">
-    <span class="section-title">即時空位狀態</span>
-    <div style="display:flex;align-items:center;gap:10px">
-      <span class="live-badge"><span class="live-dot"></span> LIVE</span>
-      <button class="collapse-btn" id="collapse-btn" onclick="toggleList()">
-        <span class="collapse-arrow" id="collapse-arrow">▲</span>
-        <span id="collapse-label">收起</span>
-      </button>
-    </div>
-  </div>
-
-  <div class="list-wrap" id="list-wrap">
-    <div class="tabs" id="region-tabs"></div>
-
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input id="search-input" type="text" placeholder="搜尋餐廳名稱…" oninput="filterCards()">
-    </div>
-
-    <div id="cards" class="cards-grid">
+  <div class="collapsible" id="list-wrap">
+    <div id="cards" class="list" aria-busy="true">
       <div class="skeleton"></div>
-      <div class="skeleton" style="animation-delay:0.1s"></div>
-      <div class="skeleton" style="animation-delay:0.2s"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
     </div>
-
-    <p id="last-updated" style="font-size:0.7rem;color:var(--muted);text-align:right;margin-top:10px;"></p>
+    <p id="last-updated" class="list-foot"></p>
   </div>
 
-  <!-- Subscribe -->
-  <div class="form-card">
-    <div class="form-title">訂閱空位通知</div>
-    <div class="form-sub">有空位時自動發送 Email＋Telegram，完全免費</div>
+  <section class="panel" aria-labelledby="sub-h">
+    <h2 id="sub-h">訂閱空位通知</h2>
+    <p>免費。有位時立即通知，隨時可以取消。</p>
 
-    <div class="form-row">
-      <div class="form-group">
-        <label>餐廳</label>
-        <select id="restaurant-select" class="form-control">
-          <option value="">載入中…</option>
+    <div class="grid-2">
+      <div class="field">
+        <label for="restaurant-select">餐廳</label>
+        <select id="restaurant-select" class="input">
+          <option value="">載入中</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>用餐人數</label>
-        <select id="people-select" class="form-control">
+      <div class="field">
+        <label for="people-select">用餐人數</label>
+        <select id="people-select" class="input">
           <option value="2">2 人</option>
           <option value="3">3 人</option>
           <option value="4" selected>4 人</option>
@@ -364,48 +68,47 @@
           <option value="8">8 人</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input id="email-input" type="email" class="form-control" placeholder="your@email.com">
+      <div class="field">
+        <label for="email-input">Email</label>
+        <input id="email-input" type="email" class="input" placeholder="you@example.com" autocomplete="email" required>
       </div>
-      <div class="form-group">
-        <label>Telegram Chat ID <span style="font-weight:400;opacity:0.6">（選填）</span></label>
-        <input id="telegram-input" type="text" class="form-control" placeholder="例：7110379672">
-        <div class="form-hint">傳訊息給 <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> 取得</div>
-      </div>
-    </div>
-
-    <!-- 自訂餐廳 -->
-    <button class="lookup-toggle" onclick="toggleLookup()">＋ 找不到你的餐廳？新增 EZTABLE 餐廳</button>
-    <div class="lookup-box" id="lookup-box">
-      <label style="margin-bottom:8px;display:block">貼上 EZTABLE 餐廳網址</label>
-      <div class="lookup-row">
-        <input id="lookup-url" type="text" class="form-control"
-          placeholder="https://tw.eztable.com/restaurant/XXXXX"
-          onkeydown="if(event.key==='Enter') lookupRestaurant()">
-        <button class="submit-btn" style="width:auto;padding:10px 16px;margin:0;white-space:nowrap"
-          id="lookup-btn" onclick="lookupRestaurant()">查詢</button>
-      </div>
-      <div id="lookup-result" class="lookup-result"></div>
-
-      <!-- 邀請碼（查到餐廳後才顯示）-->
-      <div id="invite-section" style="display:none;margin-top:12px">
-        <label>邀請碼</label>
-        <input id="invite-input" type="text" class="form-control" placeholder="輸入邀請碼">
-        <div class="form-hint">需要邀請碼才能新增非名單內的餐廳</div>
+      <div class="field">
+        <label for="telegram-input">Telegram Chat ID<span class="opt">選填</span></label>
+        <input id="telegram-input" type="text" class="input" placeholder="例如 7110379672" inputmode="numeric">
+        <span class="hint">傳任何訊息給 <a href="https://t.me/userinfobot" target="_blank" rel="noopener">@userinfobot</a> 就會回你 ID</span>
       </div>
     </div>
 
-    <button class="submit-btn" id="submit-btn" onclick="subscribe()">
-      有位就通知我 →
-    </button>
-    <div class="form-msg" id="form-msg"></div>
-  </div>
+    <div style="margin-top:16px">
+      <button class="link-btn" id="lookup-toggle" aria-expanded="false" aria-controls="lookup-box" onclick="toggleLookup()">找不到你的餐廳？貼上 EZTABLE 網址新增</button>
+    </div>
+    <div class="sub-panel" id="lookup-box" hidden>
+      <div class="field">
+        <label for="lookup-url">EZTABLE 餐廳網址</label>
+        <div class="inline-row">
+          <input id="lookup-url" type="url" class="input"
+            placeholder="https://tw.eztable.com/restaurant/17778"
+            onkeydown="if(event.key==='Enter') lookupRestaurant()">
+          <button class="btn btn-secondary" id="lookup-btn" onclick="lookupRestaurant()">查詢</button>
+        </div>
+      </div>
+      <div id="lookup-result" class="msg" hidden role="status"></div>
 
+      <div class="field" id="invite-section" hidden style="margin-top:12px">
+        <label for="invite-input">邀請碼</label>
+        <input id="invite-input" type="text" class="input" placeholder="新增名單外的餐廳需要邀請碼" autocomplete="off">
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" id="submit-btn" onclick="subscribe()">有位就通知我</button>
+    </div>
+    <div class="msg" id="form-msg" hidden role="status"></div>
+  </section>
 </main>
 
-<footer>
-  訂位雷達 · 資料來源 EZTABLE · 每 30 分鐘自動掃描
+<footer class="site">
+  訂位雷達，資料來自 EZTABLE，每 30 分鐘掃描一次。
 </footer>
 
 <script>
@@ -420,24 +123,28 @@
     return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
-  function buildCard(r, index) {
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+  }
+
+  function buildCard(r, litIndex) {
     const has = r.has_availability
     const region = regionMap[r.name] || ''
     const detail = has
-      ? `最近可訂：${r.next_date}（共 ${r.total_dates} 天）`
-      : '目前無空位'
-    const checked = r.last_checked ? `更新 ${formatTime(r.last_checked)}` : '尚未掃描'
+      ? `最近可訂 ${r.next_date}，共 ${r.total_dates} 天有位`
+      : '目前沒有空位'
+    const checked = r.last_checked ? `掃描於 ${formatTime(r.last_checked)}` : '尚未掃描'
 
     return `
-      <div class="card ${has ? 'has-slot' : ''}" data-name="${r.name}" data-region="${region}" style="animation-delay:${index * 0.04}s">
-        <div class="card-body">
-          <div class="card-name">${r.name}${region ? ` <span style="font-size:0.68rem;font-weight:400;color:var(--muted);margin-left:4px">${region}</span>` : ''}</div>
-          <div class="card-detail">${detail}</div>
+      <div class="row ${has ? 'lit' : ''}" data-name="${esc(r.name)}" data-region="${esc(region)}" style="--i:${litIndex}">
+        <div class="row-main">
+          <div class="row-name">${esc(r.name)}${region ? `<small>${esc(region)}</small>` : ''}</div>
+          <div class="row-detail">${detail}</div>
         </div>
-        <div class="card-right">
-          <span class="badge ${has ? 'badge-green' : 'badge-gray'}">${has ? '✦ 有空位' : '無空位'}</span>
-          <a class="card-link" href="${r.url}" target="_blank">前往訂位 ↗</a>
-          <span class="card-checked">${checked}</span>
+        <div class="row-side">
+          <span class="pill ${has ? 'lit' : ''}">${has ? '有位' : '無空位'}</span>
+          <a href="${esc(r.url)}" target="_blank" rel="noopener">前往訂位</a>
+          <span class="row-checked">${checked}</span>
         </div>
       </div>`
   }
@@ -445,7 +152,7 @@
   function filterCards() {
     const q = document.getElementById('search-input').value.trim().toLowerCase()
     const container = document.getElementById('cards')
-    const cards = container.querySelectorAll('.card')
+    const cards = container.querySelectorAll('.row')
     let shown = 0
     cards.forEach(c => {
       const nameMatch = c.dataset.name.toLowerCase().includes(q)
@@ -458,40 +165,47 @@
     if (empty) empty.remove()
     if (shown === 0) {
       container.insertAdjacentHTML('beforeend',
-        `<div id="empty-search" class="empty-state">找不到相關餐廳</div>`)
+        `<div id="empty-search" class="empty">沒有符合「${esc(q || activeRegion)}」的餐廳。換個關鍵字，或在下方新增餐廳。</div>`)
     }
   }
 
   function setRegion(region) {
     activeRegion = region
     document.querySelectorAll('.tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.region === region)
+      t.setAttribute('aria-selected', t.dataset.region === region ? 'true' : 'false')
     })
     filterCards()
   }
 
   async function loadStatus() {
+    const container = document.getElementById('cards')
     try {
       const res = await fetch('/api/status')
       const data = await res.json()
       allCards = data
 
       const avail = data.filter(r => r.has_availability).length
-      document.getElementById('stat-total').textContent = data.length
-      document.getElementById('stat-avail').textContent = avail
+      const times = data.filter(r => r.last_checked).map(r => r.last_checked).sort().reverse()
+      const when = times.length ? `<span class="when">上次掃描 ${formatTime(times[0])}</span>` : ''
+      document.getElementById('now').innerHTML = avail
+        ? `現在有 <strong>${avail} 家</strong>可以訂。${when}`
+        : `監控中的 ${data.length} 家目前都沒有空位。${when}`
 
       // 有位的排前面
       const sorted = [...data].sort((a, b) => b.has_availability - a.has_availability)
-      document.getElementById('cards').innerHTML = sorted.length
-        ? sorted.map((r, i) => buildCard(r, i)).join('')
-        : '<div class="empty-state">尚無監控資料，請稍後再試</div>'
+      let lit = 0
+      container.innerHTML = sorted.length
+        ? sorted.map(r => buildCard(r, r.has_availability ? lit++ : 0)).join('')
+        : '<div class="empty">還沒有掃描資料。第一次掃描完成後會出現在這裡。</div>'
+      container.setAttribute('aria-busy', 'false')
 
-      const times = data.filter(r => r.last_checked).map(r => r.last_checked).sort().reverse()
       if (times.length)
         document.getElementById('last-updated').textContent = `資料更新於 ${formatTime(times[0])}`
+      filterCards()
     } catch {
-      document.getElementById('cards').innerHTML =
-        '<div class="empty-state">無法載入狀態，請重新整理</div>'
+      container.innerHTML = '<div class="empty">讀不到空位狀態。重新整理頁面再試一次。</div>'
+      container.setAttribute('aria-busy', 'false')
+      document.getElementById('now').textContent = '讀不到空位狀態'
     }
   }
 
@@ -499,7 +213,6 @@
     const res = await fetch('/api/restaurants')
     const list = await res.json()
 
-    // build region map
     regionMap = {}
     const regions = new Set()
     list.forEach(r => {
@@ -507,19 +220,17 @@
       if (r.region) regions.add(r.region)
     })
 
-    // build tabs
     const regionOrder = ['台北', '新北', '桃園', '新竹', '台中']
     const sorted = regionOrder.filter(r => regions.has(r))
       .concat([...regions].filter(r => !regionOrder.includes(r)))
     const tabsEl = document.getElementById('region-tabs')
     tabsEl.innerHTML = ['全部', ...sorted].map(r =>
-      `<button class="tab ${r === '全部' ? 'active' : ''}" data-region="${r}" onclick="setRegion('${r}')">${r}</button>`
+      `<button class="tab" role="tab" aria-selected="${r === '全部'}" data-region="${esc(r)}" onclick="setRegion('${esc(r)}')">${esc(r)}</button>`
     ).join('')
 
-    // dropdown
     const select = document.getElementById('restaurant-select')
     select.innerHTML = list.map(r =>
-      `<option value="${r.id}" data-name="${r.name}" data-url="${r.url}" data-people="${r.people}">${r.name}</option>`
+      `<option value="${r.id}" data-name="${esc(r.name)}" data-url="${esc(r.url)}" data-people="${r.people}">${esc(r.name)}</option>`
     ).join('')
   }
 
@@ -528,30 +239,36 @@
 
   function toggleLookup() {
     const box = document.getElementById('lookup-box')
-    box.classList.toggle('open')
+    const btn = document.getElementById('lookup-toggle')
+    box.hidden = !box.hidden
+    btn.setAttribute('aria-expanded', String(!box.hidden))
+    if (!box.hidden) document.getElementById('lookup-url').focus()
+  }
+
+  function showLookup(text, type) {
+    const el = document.getElementById('lookup-result')
+    el.textContent = text
+    el.className = `msg ${type}`
+    el.hidden = false
   }
 
   async function lookupRestaurant() {
     const url = document.getElementById('lookup-url').value.trim()
-    const resultEl = document.getElementById('lookup-result')
     const btn = document.getElementById('lookup-btn')
     if (!url) return
 
-    btn.disabled = true; btn.textContent = '查詢中…'
-    resultEl.style.display = 'none'
+    btn.disabled = true; btn.textContent = '查詢中'
+    document.getElementById('lookup-result').hidden = true
     customRestaurant = null
-    document.getElementById('invite-section').style.display = 'none'
+    document.getElementById('invite-section').hidden = true
 
     try {
       const res = await fetch(`/api/lookup-restaurant?url=${encodeURIComponent(url)}`)
       const data = await res.json()
       if (res.ok) {
         customRestaurant = data
-        resultEl.className = 'lookup-result found'
-        resultEl.textContent = `找到：${data.restaurant_name}`
-        resultEl.style.display = 'block'
-        document.getElementById('invite-section').style.display = 'block'
-        // 把找到的餐廳加到 select
+        showLookup(`找到了：${data.restaurant_name}。已幫你選好，輸入邀請碼後就能訂閱。`, 'ok')
+        document.getElementById('invite-section').hidden = false
         const select = document.getElementById('restaurant-select')
         const existing = [...select.options].find(o => o.value == data.restaurant_id)
         if (!existing) {
@@ -564,14 +281,10 @@
         }
         select.value = data.restaurant_id
       } else {
-        resultEl.className = 'lookup-result error'
-        resultEl.textContent = data.detail || '查詢失敗'
-        resultEl.style.display = 'block'
+        showLookup(data.detail || '查不到這家餐廳。確認網址是 tw.eztable.com/restaurant/數字 的格式。', 'err')
       }
     } catch {
-      resultEl.className = 'lookup-result error'
-      resultEl.textContent = '網路錯誤，請重試'
-      resultEl.style.display = 'block'
+      showLookup('連線失敗，請再試一次。', 'err')
     }
     btn.disabled = false; btn.textContent = '查詢'
   }
@@ -585,12 +298,12 @@
     const inviteCode = document.getElementById('invite-input')?.value.trim()
     const isCustom = opt?.dataset.custom === '1'
 
-    if (!email.includes('@')) return showMsg('請輸入正確的 Email', 'error')
-    if (!opt?.value) return showMsg('請選擇餐廳', 'error')
-    if (isCustom && !inviteCode) return showMsg('請輸入邀請碼', 'error')
+    if (!email.includes('@')) return showMsg('Email 格式不對，請檢查後再送出。', 'err')
+    if (!opt?.value) return showMsg('請先選一家餐廳。', 'err')
+    if (isCustom && !inviteCode) return showMsg('新增名單外的餐廳需要邀請碼。', 'err')
 
     const btn = document.getElementById('submit-btn')
-    btn.disabled = true; btn.textContent = '送出中…'
+    btn.disabled = true; btn.textContent = '送出中'
 
     try {
       const res = await fetch('/api/subscribe', {
@@ -607,38 +320,37 @@
       })
       const data = await res.json()
       if (res.ok) {
-        showMsg('✅ 訂閱成功！確認信已寄出', 'success')
+        showMsg(`已訂閱 ${opt.dataset.name}。確認信已寄到 ${email}，有位時會再通知你。`, 'ok')
         document.getElementById('email-input').value = ''
         document.getElementById('telegram-input').value = ''
         if (inviteCode) document.getElementById('invite-input').value = ''
-        // 關掉自訂區塊
-        document.getElementById('lookup-box').classList.remove('open')
+        document.getElementById('lookup-box').hidden = true
+        document.getElementById('lookup-toggle').setAttribute('aria-expanded', 'false')
         customRestaurant = null
       } else {
-        showMsg(data.detail || '訂閱失敗，請重試', 'error')
+        showMsg(data.detail || '訂閱沒有成功，請再試一次。', 'err')
       }
-    } catch { showMsg('網路錯誤，請重試', 'error') }
+    } catch { showMsg('連線失敗，請再試一次。', 'err') }
 
-    btn.disabled = false; btn.textContent = '有位就通知我 →'
+    btn.disabled = false; btn.textContent = '有位就通知我'
   }
 
   function showMsg(text, type) {
     const el = document.getElementById('form-msg')
     el.textContent = text
-    el.className = `form-msg ${type}`
-    el.style.display = 'block'
+    el.className = `msg ${type}`
+    el.hidden = false
   }
 
   function toggleList() {
     const wrap = document.getElementById('list-wrap')
-    const arrow = document.getElementById('collapse-arrow')
-    const label = document.getElementById('collapse-label')
-    const collapsed = wrap.classList.toggle('collapsed')
-    arrow.style.transform = collapsed ? 'rotate(180deg)' : ''
-    label.textContent = collapsed ? '展開' : '收起'
+    const btn = document.getElementById('collapse-btn')
+    wrap.hidden = !wrap.hidden
+    btn.setAttribute('aria-expanded', String(!wrap.hidden))
+    btn.textContent = wrap.hidden ? '展開清單' : '收起清單'
   }
 
-  // 先載入地區資料，再渲染卡片（確保 regionMap 已填好）
+  // 先載入地區資料，再渲染列表（確保 regionMap 已填好）
   loadRestaurants().then(() => {
     loadStatus()
     setInterval(loadStatus, 5 * 60 * 1000)
