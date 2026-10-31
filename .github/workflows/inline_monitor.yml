@@ -2,7 +2,8 @@ name: inline.app 訂位監控
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 每小時
+    # 避開整點/半點：GitHub 排程在整點高負載時常延遲或被丟棄，改用非整點分鐘
+    - cron: '23 * * * *'  # 每小時
   workflow_dispatch:        # 手動觸發
 
 jobs:

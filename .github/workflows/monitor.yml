@@ -2,7 +2,8 @@ name: 島語訂位監控
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # 每 30 分鐘
+    # 避開整點/半點：GitHub 排程在整點高負載時常延遲或被丟棄，改用非整點分鐘
+    - cron: '7,37 * * * *'  # 每 30 分鐘
   workflow_dispatch:         # 手動觸發
 
 jobs:
