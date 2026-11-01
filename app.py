@@ -20,16 +20,15 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'subscriptions.db')
 EZTABLE_API_BASE = "https://api-evo.eztable.com"
 
 
 # ==================== 設定 ====================
 
-def load_config():
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-        return json.load(f)
+from config_loader import load_dotenv, load_config
+
+load_dotenv()
 
 
 # ==================== 資料庫 ====================
@@ -133,6 +132,9 @@ def get_available_slots(restaurant_id, people):
 def send_email(config, to_email, subject, body):
     email_cfg = config.get('email', {})
     if not email_cfg.get('enabled'):
+        return False
+    if not email_cfg.get('from') or not os.environ.get('EMAIL_PASSWORD'):
+        print(f"⚠️ Email 未寄出 ({to_email})：缺少環境變數 EMAIL_FROM 或 EMAIL_PASSWORD")
         return False
     try:
         msg = MIMEMultipart()
@@ -445,7 +447,7 @@ async def subscribe(req: SubscribeRequest):
 
     # 自訂餐廳需要邀請碼
     if is_custom:
-        required_code = os.environ.get('INVITE_CODE') or config.get('invite_code', '')
+        required_code = os.environ.get('INVITE_CODE', '')
         if not required_code:
             raise HTTPException(status_code=403, detail="目前不開放新增自訂餐廳")
         if req.invite_code != required_code:

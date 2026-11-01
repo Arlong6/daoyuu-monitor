@@ -1,17 +1,13 @@
 {
   "email": {
     "enabled": true,
-    "from": "tony0912045596@gmail.com",
-    "to": "tony0912045596@gmail.com",
     "smtp_server": "smtp.gmail.com",
     "smtp_port": 587
   },
   "desktop_notify": true,
-  "invite_code": "daoyuu2026",
 
   "telegram": {
-    "enabled": true,
-    "chat_id": "7110379672"
+    "enabled": true
   },
 
   "eztable": {
