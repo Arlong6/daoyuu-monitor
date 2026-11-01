@@ -15,15 +15,13 @@ from datetime import datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from config_loader import load_dotenv, load_config, require_notify_channel
+
+load_dotenv()
+
 TZ_TAIPEI = timezone(timedelta(hours=8))
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
 STATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'monitor_state.json')
-
-
-def load_config():
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
-        return json.load(f)
 
 
 def load_state():
@@ -265,6 +263,8 @@ async def run_check(headless=True):
     if not restaurants:
         print("ℹ️  沒有啟用的 inline 餐廳")
         return
+
+    require_notify_channel(config)
 
     print(f"\n[{datetime.now().strftime('%H:%M:%S')}] 開始掃描 {len(restaurants)} 家 inline 餐廳")
 

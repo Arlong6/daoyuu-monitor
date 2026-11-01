@@ -18,32 +18,7 @@ import json
 import os
 import random
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
-ENV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
-
-
-def load_dotenv(path=ENV_PATH):
-    """載入 .env 檔（不引入額外依賴）"""
-    if not os.path.exists(path):
-        return
-    with open(path, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('#') or '=' not in line:
-                continue
-            key, value = line.split('=', 1)
-            os.environ.setdefault(key.strip(), value.strip())
-
-
-def load_config(path=CONFIG_PATH):
-    """載入設定檔"""
-    if not os.path.exists(path):
-        print(f"❌ 找不到設定檔: {path}")
-        print("請建立 config.json（參考 config.json 範例）")
-        raise SystemExit(1)
-
-    with open(path, 'r', encoding='utf-8') as f:
-        return json.load(f)
+from config_loader import load_dotenv, load_config, require_notify_channel
 
 
 class DualPlatformMonitor:
@@ -590,6 +565,9 @@ if __name__ == "__main__":
     if not config.get('eztable', {}).get('enabled') and not config.get('inline', {}).get('enabled'):
         print("⚠️ 錯誤: 沒有啟用任何平台！")
         raise SystemExit(1)
+
+    if args.once or args.heartbeat:
+        require_notify_channel(config)
 
     monitor = DualPlatformMonitor(config)
 
